@@ -11,3 +11,7 @@ export function validateSocials(socials) {
     else return false;
   }
 }
+export function validUsername(username) {
+  const usernameRegex = /^[a-zA-Z0-9._]{3,30}$/;
+  return usernameRegex.test(username);
+}
