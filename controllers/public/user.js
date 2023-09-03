@@ -2,7 +2,7 @@ import User from '../../models/users.js';
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password'); // Retrieve all users from the database
+    const users = await User.find().select('-password').sort({ createdAt: -1 }); // Retrieve all users from the database
     res.status(200).json({ users }); // Send the users as a JSON response
   } catch (error) {
     res
@@ -27,7 +27,7 @@ export const searchUsers = async (req, res) => {
   const { search } = req.query;
 
   if (!search) {
-    return res.status(400).json({ message: 'Status parameter is required' });
+    return res.status(400).json({ message: 'Search parameter is required' });
   }
   try {
     const users = await User.find({
@@ -35,7 +35,9 @@ export const searchUsers = async (req, res) => {
         { username: { $regex: new RegExp(search, 'i') } }, // Case-insensitive username search
         { email: { $regex: new RegExp(search, 'i') } }, // Case-insensitive email search
       ],
-    }).select('-password');
+    })
+      .select('-password')
+      .sort({ createdAt: -1 });
     return res.status(200).json({ users });
   } catch (error) {
     console.error('Error in searching users:', error);
