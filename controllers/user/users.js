@@ -4,6 +4,7 @@ import {
   validUsername,
   validateEmail,
 } from '../../utils/validations.js';
+import { uploadToS3 } from '../../connections/aws.js';
 import { OAuth2Client } from 'google-auth-library';
 import bcrypt from 'bcryptjs';
 export const registerUser = async (req, res) => {
@@ -95,8 +96,9 @@ export const updateUser = async (req, res) => {
   const userId = req.rootUser?._id;
   if (!userId) return res.status(401).json({ message: 'User Not Authorized!' });
   const updates = req.body;
-
+  let profilePhoto = req.file;
   const allowedUpdates = [
+    'profilePhoto',
     'username',
     'firstName',
     'lastName',
@@ -106,8 +108,26 @@ export const updateUser = async (req, res) => {
     'bio',
     'interests',
   ];
+  let profilePhotoResult;
   const requestedUpdates = Object.keys(updates);
+  if (requestedUpdates.length <= 0)
+    return res
+      .status(400)
+      .json({ message: 'Provide atleast one value to update.' });
+  if (profilePhoto) {
+    console.log('True');
+    const format = profilePhoto.originalname.split('.').pop().toLowerCase();
 
+    if (!format) {
+      return res
+        .status(400)
+        .json({ message: 'Could not determine image format' });
+    }
+    profilePhotoResult = await uploadToS3(
+      profilePhoto.buffer,
+      `profile/${Date.now().toString()}.${format}`
+    );
+  }
   const isValidUpdate = requestedUpdates.every((update) =>
     allowedUpdates.includes(update)
   );
@@ -124,10 +144,14 @@ export const updateUser = async (req, res) => {
       )
         return res.status(400).json({ message: 'Username Already Exists!' });
     }
-    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
-      new: true, // This option returns the updated user document
-      runValidators: true, // This option runs the validators defined in the userSchema for the updates
-    });
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { ...updates, profilePhoto: profilePhotoResult?.Location },
+      {
+        new: true, // This option returns the updated user document
+        runValidators: true, // This option runs the validators defined in the userSchema for the updates
+      }
+    );
     if (updatedUser) return res.status(201).json({ message: 'User Updated!' });
   } catch (error) {
     res.status(500).json({ message: error.message });

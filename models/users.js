@@ -3,6 +3,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 const userSchema = new mongoose.Schema(
   {
+    profilePhoto: {
+      type: String,
+    },
     username: {
       type: String,
       trim: true,

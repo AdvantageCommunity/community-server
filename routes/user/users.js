@@ -10,12 +10,18 @@ import {
   unFollowUser,
 } from '../../controllers/user/users.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
+import { upload } from '../../connections/aws.js';
 const router = express.Router();
 
 router.post('/auth/register', registerUser);
 router.post('/auth/login', loginUser);
 router.post('/auth/google-auth', googleAuth);
-router.patch('/profile/me', isUserAuthenticated, updateUser);
+router.patch(
+  '/profile/me',
+  upload.single('profilePhoto'),
+  isUserAuthenticated,
+  updateUser
+);
 router.get('/profile/me', isUserAuthenticated, getActiveUserInfo);
 router.post('/auth/me/logout', isUserAuthenticated, logoutUser);
 router.patch('/:userId/follow', isUserAuthenticated, followUser);
