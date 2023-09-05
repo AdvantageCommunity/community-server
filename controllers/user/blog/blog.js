@@ -1,14 +1,21 @@
 import slugify from 'slugify';
 import Blog from '../../../models/blog.js';
+import { uploadToS3 } from '../../../connections/aws.js';
 export const postBlog = async (req, res) => {
-  const { title, content, tags, coverImage } = req.body;
+  const { title, content, tags } = req.body;
+  const coverImage = req.file;
   if (!title) return res.status(400).json({ message: 'Provide Title!' });
   if (!content) return res.status(400).json({ message: 'Provide Content!' });
   if (!tags) return res.status(400).json({ message: 'Provide Tags!' });
   if (!coverImage)
     return res.status(400).json({ message: 'Provide Cover Image!' });
+
   const slug = slugify(title, { lower: true });
   try {
+    const documentResult = await uploadToS3(
+      coverImage.buffer,
+      `blog/${Date.now().toString()}.jpg`
+    );
     const slugAlreadyExists = await Blog.findOne({ slug });
     if (slugAlreadyExists)
       return res.status(400).json({ message: 'Try Modifying your title!' });
@@ -17,8 +24,8 @@ export const postBlog = async (req, res) => {
       content,
       tags,
       slug,
-      coverImage,
-      author: req.rootUser?._id,
+      coverImage: documentResult.Location,
+      author: req.rootUser._id,
     });
     await blog.save();
     return res.status(201).json({ message: 'Blog Added Successfully!' });

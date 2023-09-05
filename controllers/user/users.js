@@ -104,7 +104,7 @@ export const updateUser = async (req, res) => {
     'phoneNumber',
     'gender',
     'bio',
-    'intrests',
+    'interests',
   ];
   const requestedUpdates = Object.keys(updates);
 
@@ -207,4 +207,56 @@ export const logoutUser = async (req, res) => {
   });
 
   res.status(201).json({ message: 'Logout successful' });
+};
+export const followUser = async (req, res) => {
+  const { userId } = req.params;
+  const activeUserId = req.rootUser._id;
+  if (!userId) return res.status(400).json({ message: 'Provide User Id.' });
+  try {
+    const userToFollow = await User.findOne({ _id: userId });
+    if (!userToFollow)
+      return res.status(404).json({ message: 'User Not Found.' });
+
+    if (!req.rootUser.followings.includes(userId)) {
+      req.rootUser.followings.push(userId);
+      userToFollow.followers.push(activeUserId);
+      await req.rootUser.save();
+      await userToFollow.save();
+      res.status(200).json({ message: 'User followed successfully' });
+    } else {
+      res.status(400).json({ message: 'You already follow this user.' });
+    }
+  } catch (error) {
+    console.log('error in follow user api');
+    res.status(500).json({ message: error.message });
+  }
+};
+export const unFollowUser = async (req, res) => {
+  const { userId } = req.params;
+  const activeUserId = req.rootUser._id;
+  if (!userId) return res.status(400).json({ message: 'Provide User Id.' });
+  try {
+    const userToUnfollow = await User.findOne({ _id: userId });
+    if (!userToUnfollow)
+      return res.status(404).json({ message: 'User Not Found.' });
+
+    if (req.rootUser.followings.includes(userId)) {
+      req.rootUser.followings = req.rootUser.followings.filter(
+        (id) => id.toString() !== userId
+      );
+      userToUnfollow.followers = userToUnfollow.followers.filter(
+        (id) => id.toString() !== activeUserId.toString()
+      );
+
+      await req.rootUser.save();
+      await userToUnfollow.save();
+
+      res.status(200).json({ message: 'User unfollowed successfully' });
+    } else {
+      res.status(400).json({ message: 'Your not following this user' });
+    }
+  } catch (error) {
+    console.log('error in unfollow user api');
+    res.status(500).json({ message: error.message });
+  }
 };

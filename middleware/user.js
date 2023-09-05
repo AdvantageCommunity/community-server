@@ -14,7 +14,7 @@ export const isUserAuthenticated = async (req, res, next) => {
       return res.status(400).json({ message: 'Invalid Token!' });
     }
     const verifiedUser = await User.findOne({ _id: verfiyToken.id })?.select(
-      '_id username email'
+      '-password'
     );
     if (!verifiedUser)
       return res.status(401).json({ message: 'Not Authorized. Login First!' });
@@ -24,7 +24,7 @@ export const isUserAuthenticated = async (req, res, next) => {
     const verifyGoogleToken = jwt.decode(accessToken);
     const verifiedUser = await User.findOne({
       email: verifyGoogleToken.email,
-    })?.select('_id email username');
+    })?.select('-password');
     req.rootUser = verifiedUser;
     req.accessToken = accessToken;
   }

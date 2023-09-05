@@ -49,8 +49,19 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
     },
-
-    intrests: [
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    followings: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    interests: [
       {
         type: String,
       },
@@ -59,6 +70,12 @@ const userSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Community',
+      },
+    ],
+    blogs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Blog',
       },
     ],
   },
