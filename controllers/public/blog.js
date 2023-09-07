@@ -42,3 +42,24 @@ export const searchBlogs = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+export const getPopularBlogCategories = async (req, res) => {
+  try {
+    // Aggregate and count the occurrence of each tag in the "tags" field of blogs
+    const popularTags = await Blog.aggregate([
+      { $unwind: '$tags' },
+      {
+        $group: {
+          _id: '$tags',
+        },
+      },
+    ]);
+
+    // Extract the tag names from the aggregation result
+    const tagNames = popularTags.map((tag) => tag._id);
+
+    return res.status(200).json({ allTags: tagNames });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};

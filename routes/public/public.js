@@ -7,6 +7,7 @@ import {
 import {
   getAllBlogs,
   getBlogBySlug,
+  getPopularBlogCategories,
   searchBlogs,
 } from '../../controllers/public/blog.js';
 const router = express.Router();
@@ -16,6 +17,7 @@ router.get('/users/user/:userId', getUserById);
 router.get('/users', searchUsers);
 
 // Blogs Related Routes
+router.get('/blogs/popular-tags', getPopularBlogCategories);
 router.get('/blogs/all', getAllBlogs);
 router.get('/blogs/:slug', getBlogBySlug);
 router.get('/blogs', searchBlogs);

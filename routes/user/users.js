@@ -8,6 +8,8 @@ import {
   logoutUser,
   followUser,
   unFollowUser,
+  getUserFollowings,
+  getUserFollowers,
 } from '../../controllers/user/users.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
 import { upload } from '../../connections/aws.js';
@@ -23,6 +25,8 @@ router.patch(
   updateUser
 );
 router.get('/profile/me', isUserAuthenticated, getActiveUserInfo);
+router.get('/:userId/followings', isUserAuthenticated, getUserFollowings);
+router.get('/:userId/followers', isUserAuthenticated, getUserFollowers);
 router.post('/auth/me/logout', isUserAuthenticated, logoutUser);
 router.patch('/:userId/follow', isUserAuthenticated, followUser);
 router.post('/:userId/follow', isUserAuthenticated, followUser);

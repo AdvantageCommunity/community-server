@@ -115,7 +115,6 @@ export const updateUser = async (req, res) => {
       .status(400)
       .json({ message: 'Provide atleast one value to update.' });
   if (profilePhoto) {
-    console.log('True');
     const format = profilePhoto.originalname.split('.').pop().toLowerCase();
 
     if (!format) {
@@ -281,6 +280,30 @@ export const unFollowUser = async (req, res) => {
     }
   } catch (error) {
     console.log('error in unfollow user api');
+    res.status(500).json({ message: error.message });
+  }
+};
+export const getUserFollowings = async (req, res) => {
+  const { userId } = req.params;
+  if (!userId) return res.status(400).json({ message: 'Provide user id' });
+  try {
+    const user = await User.findOne({ _id: userId });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    const followings = user.followings;
+    res.status(200).json({ followings });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const getUserFollowers = async (req, res) => {
+  const { userId } = req.params;
+  if (!userId) return res.status(400).json({ message: 'Provide user id' });
+  try {
+    const user = await User.findOne({ _id: userId });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    const followers = user.followers;
+    res.status(200).json({ followers });
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };

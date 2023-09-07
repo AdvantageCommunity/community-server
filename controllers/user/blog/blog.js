@@ -1,7 +1,6 @@
 import slugify from 'slugify';
 import Blog from '../../../models/blog.js';
 import { uploadToS3 } from '../../../connections/aws.js';
-import { v4 as uuidv4 } from 'uuid';
 export const postBlog = async (req, res) => {
   const { title, content, tags } = req.body;
   const coverImage = req.file;
@@ -10,7 +9,7 @@ export const postBlog = async (req, res) => {
   if (!tags) return res.status(400).json({ message: 'Provide Tags!' });
   if (!coverImage)
     return res.status(400).json({ message: 'Provide Cover Image!' });
-
+  const parsedTags = Array.isArray(tags) ? tags : JSON.parse(tags || '[]');
   const slug = slugify(title, { lower: true });
   try {
     const documentResult = await uploadToS3(
@@ -23,7 +22,7 @@ export const postBlog = async (req, res) => {
     const blog = new Blog({
       title,
       content,
-      tags,
+      tags: parsedTags,
       slug,
       coverImage: documentResult.Location,
       author: req.rootUser._id,
@@ -62,7 +61,7 @@ export const updateBlog = async (req, res) => {
       }
     );
     if (!updatedUser)
-      return res.status(201).json({ message: 'Unable to Update the Blog!' });
+      return res.status(400).json({ message: 'Unable to Update the Blog!' });
     return res.status(201).json({ message: 'Blog Updated!' });
   } catch (error) {
     res.status(500).json({ message: error.message });
