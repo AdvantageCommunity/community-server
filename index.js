@@ -5,6 +5,7 @@ import waitlistRoutes from './routes/waitlist.js';
 import userRoutes from './routes/user/users.js';
 import publicRoutes from './routes/public/public.js';
 import userBlogRoutes from './routes/user/blog.js';
+import userChatRoutes from './routes/user/chat.js';
 import { connectDB } from './connections/mongoDB.js';
 dotenv.config();
 const app = express();
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/user/blog', userBlogRoutes);
+app.use('api/v1/users/messages', userChatRoutes);
 app.use('/api/v1/public', publicRoutes);
 app.use('/api/v1/waitlist', waitlistRoutes);
 
