@@ -9,6 +9,10 @@ const communityRoomSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  latestMessage: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Message',
+  },
   owners: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -16,12 +20,13 @@ const communityRoomSchema = new mongoose.Schema({
       required: true,
     },
   ],
-  members: [
+
+  participants: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
   ],
 });
-const CommunityRoom = mongoose.model('CommityRoom', communityRoomSchema);
-export default CommunityRoom;
+const communityRoom = mongoose.model('communityRoom', communityRoomSchema);
+export default communityRoom;

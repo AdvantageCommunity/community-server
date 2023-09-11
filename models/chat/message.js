@@ -18,7 +18,7 @@ const messageSchema = new mongoose.Schema({
   },
   chatType: {
     type: String,
-    enum: ['UserChat', 'CommunityRoom'], // Define chat types
+    enum: ['userChat', 'communityRoom'], // Define chat types
     required: true,
   },
 });
