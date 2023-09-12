@@ -7,6 +7,10 @@ const communitySchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    email: {
+      // this need to be removed
+      type: String,
+    },
     logo: {
       type: String,
     },
@@ -18,6 +22,11 @@ const communitySchema = new mongoose.Schema(
     description: {
       type: String,
     },
+    tags: [
+      {
+        type: String,
+      },
+    ],
     blogs: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -10,6 +10,11 @@ import {
   getPopularBlogCategories,
   searchBlogs,
 } from '../../controllers/public/blog.js';
+import {
+  allCommunities,
+  communitybyId,
+  searchCommunity,
+} from '../../controllers/public/community.js';
 const router = express.Router();
 // User Related Routes
 router.get('/users/all', getAllUsers);
@@ -23,4 +28,8 @@ router.get('/blogs/:slug', getBlogBySlug);
 router.get('/blogs', searchBlogs);
 
 // Community Related
+router.get('/community/all', allCommunities);
+router.get('/community/:communityId', communitybyId);
+router.get('/community', searchCommunity);
+
 export default router;

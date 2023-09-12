@@ -4,7 +4,7 @@ import User from '../../../models/users.js';
 import { isValidContacts } from '../../../utils/validations.js';
 
 export const registerCommunity = async (req, res) => {
-  let { name, description, contacts } = req.body;
+  let { name, description, contacts, tags, email } = req.body;
   const logo = req.files
     ? req.files['logo']
       ? req.files['logo'][0]
@@ -15,13 +15,15 @@ export const registerCommunity = async (req, res) => {
     return res.status(400).json({ message: 'Provide community name.' });
   if (!description)
     return res.status(400).json({ message: 'Provide community description.' });
-
   contacts = Array.isArray(contacts) ? tags : JSON.parse(contacts || '[]');
   const validContacts = isValidContacts(contacts);
   if (!validContacts)
     return res.status(400).json({ message: 'Invalid Contacts.' });
   if (!logo)
     return res.status(400).json({ message: 'Provide community logo.' });
+  if (tags) {
+    tags = Array.isArray(tags) ? tags : JSON.parse(tags || '[]');
+  }
   try {
     const format = logo.originalname.split('.').pop().toLowerCase();
 
@@ -40,6 +42,7 @@ export const registerCommunity = async (req, res) => {
       logo: logoResult?.Location,
       contacts,
       admins: [req.rootUser._id],
+      tags,
     });
     await community.save();
     res
@@ -52,8 +55,7 @@ export const registerCommunity = async (req, res) => {
 };
 export const updateCommunityDetails = async (req, res) => {
   const { communityId } = req.params;
-  const updates = req.body;
-
+  let updates = req.body;
   let logoResult, coverImageResult;
   if (!communityId)
     return res.status(400).json({ message: 'Provide community id.' });
@@ -71,7 +73,7 @@ export const updateCommunityDetails = async (req, res) => {
   try {
     const community = await Community.findOne({
       _id: communityId,
-      status: 'active',
+      // status: 'active',
       admins: {
         $elemMatch: {
           $eq: req.rootUser._id,
@@ -89,7 +91,7 @@ export const updateCommunityDetails = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'Provide atleast one value to update.' });
-    const allowedUpdates = ['name', 'description', 'contacts'];
+    const allowedUpdates = ['name', 'description', 'contacts', 'tags'];
 
     if (logo !== null) {
       const logoFormat = logo.originalname.split('.').pop().toLowerCase();
@@ -121,11 +123,17 @@ export const updateCommunityDetails = async (req, res) => {
       );
       coverImageResult = result.Location;
     }
-    const isValidUpdate = requestedUpdates.every((update) => {
-      allowedUpdates.includes(update);
-    });
+    const isValidUpdate = requestedUpdates.every((update) =>
+      allowedUpdates.includes(update)
+    );
+
     if (!isValidUpdate)
       return res.status(400).json({ message: 'Provide Valid Updates!' });
+    if (requestedUpdates.includes('tags')) {
+      updates.tags = Array.isArray(updates.tags)
+        ? tags
+        : JSON.parse(updates.tags || '[]');
+    }
     const updatedCommunity = await Community.findByIdAndUpdate(communityId, {
       ...updates,
       logo: logoResult,
