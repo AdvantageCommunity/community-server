@@ -13,6 +13,7 @@ import {
 import {
   allCommunities,
   communitybyId,
+  getPopularCommunityTags,
   searchCommunity,
 } from '../../controllers/public/community.js';
 const router = express.Router();
@@ -28,6 +29,7 @@ router.get('/blogs/:slug', getBlogBySlug);
 router.get('/blogs', searchBlogs);
 
 // Community Related
+router.get('/community/popular-tags', getPopularCommunityTags);
 router.get('/community/all', allCommunities);
 router.get('/community/:communityId', communitybyId);
 router.get('/community', searchCommunity);

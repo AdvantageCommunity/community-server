@@ -4,13 +4,14 @@ import User from '../../../models/users.js';
 import { isValidContacts } from '../../../utils/validations.js';
 
 export const registerCommunity = async (req, res) => {
-  let { name, description, contacts, tags, email } = req.body;
+  let { name, description, contacts, tags } = req.body;
+  if (req.rootUser.communities.length > 0)
+    return res.status(401).json({ message: 'Only 1 community per user.' });
   const logo = req.files
     ? req.files['logo']
       ? req.files['logo'][0]
       : null
     : null;
-
   if (!name)
     return res.status(400).json({ message: 'Provide community name.' });
   if (!description)
@@ -36,6 +37,7 @@ export const registerCommunity = async (req, res) => {
       logo.buffer,
       `community/${Date.now().toString()}.${format}`
     );
+
     const community = new Community({
       name,
       description,
@@ -43,8 +45,14 @@ export const registerCommunity = async (req, res) => {
       contacts,
       admins: [req.rootUser._id],
       tags,
+      members: [req.rootUser._id],
     });
     await community.save();
+    req.rootUser.communities.push({
+      community: community._id,
+      role: 'admin',
+    });
+    await req.rootUser.save();
     res
       .status(201)
       .json({ message: 'Community creation request submitted successfully.' });
@@ -73,7 +81,7 @@ export const updateCommunityDetails = async (req, res) => {
   try {
     const community = await Community.findOne({
       _id: communityId,
-      // status: 'active',
+      status: 'active',
       admins: {
         $elemMatch: {
           $eq: req.rootUser._id,
@@ -149,6 +157,30 @@ export const updateCommunityDetails = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const deleteCommunity = async (req, res) => {
+  const { communityId } = req.params;
+  if (!communityId)
+    return res.status(400).json({ message: 'Provide community id.' });
+  try {
+    const deletedCommunity = await Community.findOneAndDelete({
+      _id: communityIdToDelete,
+      admins: {
+        $elemMatch: {
+          $eq: req.rootUser._id,
+        },
+      },
+    });
+
+    if (!deletedCommunity) {
+      return res.status(404).json({ message: 'Community not found.' });
+    } else {
+      res.status(200).json({ message: 'Community Deleted.' });
+    }
+  } catch (error) {
+    console.error('Error in deleteCommunity API:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
 export const addCommunityAdmin = async (req, res) => {
   const { communityId } = req.params;
   const { userId } = req.body;
@@ -173,6 +205,9 @@ export const addCommunityAdmin = async (req, res) => {
       return res.status(404).json({ message: 'User not exists.' });
     if (community.admins.includes(userExists._id))
       return res.status(400).json({ message: 'User is already admin.' });
+    if (!community.members.includes(userExists._id)) {
+      community.members.push(userExists._id);
+    }
     community.admins.push(userExists._id);
     await community.save();
     res.status(201).json({ message: 'Admin added successfully.' });
@@ -220,6 +255,7 @@ export const removeCommunityAdmin = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 export const communityAdmins = async (req, res) => {
   const { communityId } = req.params;
   if (!communityId)
@@ -234,6 +270,130 @@ export const communityAdmins = async (req, res) => {
     res.status(200).json({ admins: community.admins });
   } catch (error) {
     console.error('Error in communityAdmins API:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+export const removeCommunityMember = async (req, res) => {
+  const { communityId, memberId } = req.params;
+  if (req.rootUser._id.toString() === memberId.toString())
+    return res
+      .status(400)
+      .json({ message: 'You are attempting to remove yourself.' });
+  if (!communityId)
+    return res.status(400).json({ message: 'Provide community id.' });
+  if (!memberId) return res.status(400).json({ message: 'Provide member id.' });
+  try {
+    const community = await Community.findOne({
+      _id: communityId,
+      status: 'active',
+    });
+    if (!community)
+      return res.status(404).json({ message: 'Community not found.' });
+    if (!community.admins.includes(req.rootUser._id))
+      return res
+        .status(403)
+        .json({ message: 'Only admins can remove members.' });
+    const userIndex = community.members.findIndex(
+      (member) => member.toString() === memberId.toString()
+    );
+
+    if (userIndex === -1) {
+      return res.status(400).json({
+        message: 'User is not a member of the community. No action taken.',
+      });
+    }
+
+    community.members.splice(userIndex, 1);
+    await community.save();
+    const user = await User.findById(memberId);
+    if (user) {
+      user.communities = user.communities.filter(
+        (community) => community.community.toString() !== communityId.toString()
+      );
+      await user.save();
+    }
+    return res
+      .status(200)
+      .json({ message: 'Member has been removed from the community.' });
+  } catch (error) {
+    console.error('Error in removeCommunityMember API:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+export const viewCommunityMembers = async (req, res) => {
+  const { communityId } = req.params;
+  if (!communityId)
+    return res.status(400).json({ message: 'Provide community id.' });
+  try {
+    const community = await Community.findOne({
+      _id: communityId,
+      status: 'active',
+    }).populate('members', 'firstName lastName email profilePhoto');
+    res.status(200).json({ members: community.members });
+  } catch (error) {
+    console.error('Error in viewCommunityMembers API:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+export const joinCommunity = async (req, res) => {
+  const { communityId } = req.params;
+  if (!communityId)
+    return res.status(400).json({ message: 'Provide community id.' });
+  try {
+    const community = await Community.findOne({
+      _id: communityId,
+      status: 'active',
+    });
+    if (!community)
+      return res.status(404).json({ message: 'Community not found.' });
+    if (community.members.includes(req.rootUser._id)) {
+      return res
+        .status(400)
+        .json({ message: 'User is already a member of the community.' });
+    }
+    community.members.push(req.rootUser._id);
+    req.rootUser.communities.push({
+      community: community._id,
+    });
+    await community.save();
+    await req.rootUser.save();
+
+    res
+      .status(200)
+      .json({ message: 'User has joined the community successfully.' });
+  } catch (error) {
+    console.error('Error in joinCommunity API:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+export const leaveCommunity = async (req, res) => {
+  const { communityId } = req.params;
+  if (!communityId)
+    return res.status(400).json({ message: 'Provide community id.' });
+  try {
+    const community = await Community.findOne({
+      _id: communityId,
+      status: 'active',
+    });
+    if (!community)
+      return res.status(404).json({ message: 'Community not found.' });
+    if (!community.members.includes(req.rootUser._id))
+      return res
+        .status(400)
+        .json({ message: 'User is not a member of the community.' });
+    community.members = community.members.filter(
+      (member) => member.toString() !== req.rootUser._id.toString()
+    );
+    req.rootUser.communities = req.rootUser.communities.filter(
+      (com) => com.community.toString() !== communityId.toString()
+    );
+    await community.save();
+    await req.rootUser.save();
+    return res
+      .status(200)
+      .json({ message: 'User has left the community successfully.' });
+  } catch (error) {
+    console.error('Error in leaveCommunity API:', error);
     res.status(500).json({ message: error.message });
   }
 };

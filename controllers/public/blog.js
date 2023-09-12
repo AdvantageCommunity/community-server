@@ -56,8 +56,7 @@ export const getPopularBlogCategories = async (req, res) => {
 
     // Extract the tag names from the aggregation result
     const tagNames = popularTags.map((tag) => tag._id);
-
-    return res.status(200).json({ allTags: tagNames });
+    return res.status(200).json({ tags: tagNames });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Server error' });

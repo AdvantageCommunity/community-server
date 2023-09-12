@@ -2,7 +2,14 @@ import User from '../../models/users.js';
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 }); // Retrieve all users from the database
+    const users = await User.find()
+      .populate({
+        path: 'communities.community',
+        model: 'Community',
+        select: 'name logo description tags admins',
+      })
+      .select('-password')
+      .sort({ createdAt: -1 }); // Retrieve all users from the database
     res.status(200).json({ users }); // Send the users as a JSON response
   } catch (error) {
     res
@@ -14,7 +21,13 @@ export const getUserById = async (req, res) => {
   const { userId } = req.params;
   if (!userId) return res.status(400).json({ message: 'Provide User ID!' });
   try {
-    const user = await User.findOne({ _id: userId }).select('-password');
+    const user = await User.findOne({ _id: userId })
+      .populate({
+        path: 'communities.community',
+        model: 'Community',
+        select: 'name logo description tags admins',
+      })
+      .select('-password');
     if (!user) return res.status(404).json({ message: 'No user found!' });
     return res.status(200).json({ user });
   } catch (error) {
