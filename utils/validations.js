@@ -44,3 +44,29 @@ export async function generateUniqueUsername(email) {
     'All generated usernames are taken. Please choose a username manually.'
   );
 }
+export function isValidContacts(arr) {
+  if (!Array.isArray(arr)) {
+    return false;
+  }
+
+  if (arr.length === 0) {
+    return false;
+  }
+  for (const item of arr) {
+    // Checking if item is an object with "name" and "link" properties of string type
+    if (
+      typeof item === 'object' &&
+      item.hasOwnProperty('name') &&
+      typeof item.name === 'string' &&
+      item.hasOwnProperty('link') &&
+      typeof item.link === 'string'
+    ) {
+      continue;
+    } else {
+      return false;
+    }
+  }
+
+  // If all items in the array meet the criteria, return true
+  return true;
+}

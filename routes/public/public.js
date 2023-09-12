@@ -22,4 +22,5 @@ router.get('/blogs/all', getAllBlogs);
 router.get('/blogs/:slug', getBlogBySlug);
 router.get('/blogs', searchBlogs);
 
+// Community Related
 export default router;

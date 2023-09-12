@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema(
   {
     profilePhoto: {
       type: String,
+      default:
+        'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png',
     },
     username: {
       type: String,
@@ -79,7 +81,6 @@ const userSchema = new mongoose.Schema(
           type: String,
           enum: ['member', 'admin'],
           default: 'member',
-          trim: true,
         },
       },
     ],

@@ -7,17 +7,13 @@ const communitySchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
     logo: {
       type: String,
     },
     coverImage: {
       type: String,
+      default:
+        'https://images.unsplash.com/photo-1533134486753-c833f0ed4866?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
     },
     description: {
       type: String,
@@ -54,9 +50,15 @@ const communitySchema = new mongoose.Schema(
     ],
     contacts: [
       {
-        type: String,
+        name: String,
+        link: String,
       },
     ],
+    status: {
+      type: String,
+      enum: ['pending', 'rejected', 'active'],
+      default: 'pending',
+    },
   },
   {
     timestamps: true,
