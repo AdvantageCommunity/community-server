@@ -21,7 +21,7 @@ export const sendMessage = async (req, res) => {
     });
     await newMessage.save();
     newMessage = await Message.findOne({ _id: newMessage._id })
-      .populate('sender', '-password -interests -isAdmin')
+      .populate('sender', '-password -interests')
       .populate('chat');
     newMessage = await User.populate(newMessage, {
       path: 'chat.participants',
@@ -53,7 +53,7 @@ export const allUserMessages = async (req, res) => {
     if (!chatExists)
       return res.status(403).json({ message: 'You cannot access this chat.' });
     const messages = await Message.find({ chat: chatId })
-      .populate('sender', '-password -isAdmin -interests')
+      .populate('sender', '-password -interests')
       .populate('chat');
     res.status(200).json({ messages });
   } catch (error) {
@@ -111,7 +111,7 @@ export const allRoomMessages = async (req, res) => {
     if (!roomExists)
       return res.status(403).json({ message: 'You cannot access this chat.' });
     const messages = await Message.find({ chat: roomId })
-      .populate('sender', '-password -isAdmin -interests')
+      .populate('sender', '-password -interests')
       .populate('chat');
     res.status(200).json({ messages });
   } catch (error) {

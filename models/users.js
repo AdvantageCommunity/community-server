@@ -42,10 +42,6 @@ const userSchema = new mongoose.Schema(
         trim: true,
       },
     },
-    isAdmin: {
-      type: Boolean,
-      default: false,
-    },
     dateOfBirth: {
       type: Date,
     },
@@ -75,8 +71,16 @@ const userSchema = new mongoose.Schema(
     ],
     communities: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Community',
+        community: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Community',
+        },
+        role: {
+          type: String,
+          enum: ['member', 'admin'],
+          default: 'member',
+          trim: true,
+        },
       },
     ],
     blogs: [

@@ -21,7 +21,7 @@ export const accessUserChat = async (req, res) => {
           },
         ],
       })
-      .populate('participants', '-password -isAdmin -interests')
+      .populate('participants', '-password -interests')
       .populate('latestMessage');
 
     if (chat) {
@@ -63,11 +63,11 @@ export const fetchUserChats = async (req, res) => {
           },
         },
       })
-      .populate('participants', '-password -isAdmin -interests')
+      .populate('participants', '-password -interests')
       .populate('latestMessage');
     chats = await User.populate(chats, {
       path: 'latestMessage.sender',
-      select: '-password -isAdmin -interests',
+      select: '-password -interests',
     });
     res.status(200).json({ chats });
   } catch (error) {
@@ -84,7 +84,7 @@ export const accessRoomChat = async (req, res) => {
     if (room.participants.includes(req.rootUser._id)) {
       room = room
         .populate('owners', '-password')
-        .populate('participants', '-password -isAdmin -interests');
+        .populate('participants', '-password -interests');
       return res
         .status(200)
         .json({ message: 'User is already in the room', room });
