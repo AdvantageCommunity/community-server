@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/users.js';
+import Community from '../models/community.js';
 export const isUserAuthenticated = async (req, res, next) => {
   const authorizationHeader = req.headers.authorization;
   if (!authorizationHeader) {
@@ -28,5 +29,30 @@ export const isUserAuthenticated = async (req, res, next) => {
     req.rootUser = verifiedUser;
     req.accessToken = accessToken;
   }
+
   next();
+};
+export const checkCommunityAdmin = async (req, res, next) => {
+  const { communityId } = req.params;
+  const { _id: userId } = req.rootUser;
+  if (!communityId)
+    return res.status(400).json({ message: 'Provide community Id.' });
+  if (!userId)
+    return res.status(400).json({ message: 'User not authenticated.' });
+  try {
+    const community = await Community.findOne({ _id: communityId });
+    if (!community)
+      return res.status(404).json({ message: 'Community not found.' });
+    if (!community.admins.includes(userId))
+      return res
+        .status(403)
+        .json({ message: 'You are not an admin of this community.' });
+    req.community = community;
+    next();
+  } catch (error) {
+    console.error('Error in checkAdmin middleware:', error);
+    res
+      .status(500)
+      .json({ message: 'An error occurred while checking admin status.' });
+  }
 };

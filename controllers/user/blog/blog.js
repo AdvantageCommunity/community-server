@@ -35,14 +35,17 @@ export const postBlog = async (req, res) => {
 };
 export const updateBlog = async (req, res) => {
   let { slug } = req.params;
+  const coverImage = req.file;
+  let coverImageUrl;
   try {
     const blog = await Blog.findOne({
       slug,
       author: req.rootUser?._id,
     });
     if (!blog) return res.status(404).json({ message: 'Blog Not Found!' });
+    coverImageUrl = blog.coverImage;
     const updates = req.body;
-    const allowedUpdates = ['title', 'content', 'tags', 'coverImage'];
+    const allowedUpdates = ['title', 'content', 'tags'];
     const requestedUpdates = Object.keys(updates);
     const isValidUpdate = requestedUpdates.every((update) =>
       allowedUpdates.includes(update)
@@ -52,9 +55,16 @@ export const updateBlog = async (req, res) => {
     if (requestedUpdates.includes('title')) {
       slug = slugify(req.body.title, { lower: true });
     }
+    if (coverImage) {
+      const documentResult = await uploadToS3(
+        coverImage.buffer,
+        `blog/${Date.now().toString()}.jpg`
+      );
+      coverImageUrl = documentResult.Location;
+    }
     const updatedUser = await Blog.findByIdAndUpdate(
       blog._id,
-      { ...updates, slug },
+      { ...updates, slug, coverImage: coverImageUrl },
       {
         new: true, // This option returns the updated user document
         runValidators: true, // This option runs the validators defined in the userSchema for the updates

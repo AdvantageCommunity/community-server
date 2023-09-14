@@ -94,11 +94,11 @@ export const loginUser = async (req, res) => {
     const isEmail = validateEmail(identifier);
     if (isEmail) {
       userExist = await User.findOne({ email: identifier }).select(
-        'username email _id password'
+        'username email _id password verified'
       );
     } else {
       userExist = await User.findOne({ username: identifier }).select(
-        'username email _id password'
+        'username email _id password verified'
       );
     }
     if (!userExist) return res.status(404).json({ message: 'User Not Found!' });
@@ -106,6 +106,7 @@ export const loginUser = async (req, res) => {
     const validPassword = await bcrypt.compare(password, userExist.password);
     if (!validPassword)
       return res.status(401).json({ message: 'Incorrect Password!' });
+
     if (!userExist.verified) {
       let token = await Token.findOne({ user: userExist._id });
 

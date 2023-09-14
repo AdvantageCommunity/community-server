@@ -5,6 +5,7 @@ import {
   searchUsers,
 } from '../../controllers/public/user.js';
 import {
+  allCommunitiesBlogs,
   getAllBlogs,
   getBlogBySlug,
   getPopularBlogCategories,
@@ -22,7 +23,7 @@ router.get('/users/all', getAllUsers);
 router.get('/users/user/:userId', getUserById);
 router.get('/users', searchUsers);
 
-// Blogs Related Routes
+// User Blogs Related Routes
 router.get('/blogs/popular-tags', getPopularBlogCategories);
 router.get('/blogs/all', getAllBlogs);
 router.get('/blogs/:slug', getBlogBySlug);
@@ -33,5 +34,6 @@ router.get('/community/popular-tags', getPopularCommunityTags);
 router.get('/community/all', allCommunities);
 router.get('/community/:communityId', communitybyId);
 router.get('/community', searchCommunity);
-
+// Community Blog
+router.get('/community/blog/all', allCommunitiesBlogs);
 export default router;

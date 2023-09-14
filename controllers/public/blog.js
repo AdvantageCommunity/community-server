@@ -2,7 +2,7 @@ import Blog from '../../models/blog.js';
 
 export const getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find().sort({ createdAt: -1 }); // Retrieve all users from the database
+    const blogs = await Blog.find().sort({ createdAt: -1 });
     res.status(200).json({ blogs }); // Send the users as a JSON response
   } catch (error) {
     res
@@ -62,3 +62,18 @@ export const getPopularBlogCategories = async (req, res) => {
     return res.status(500).json({ error: 'Server error' });
   }
 };
+// Community Blogs
+export const allCommunitiesBlogs = async (req, res) => {
+  try {
+    const blogs = await Blog.find({
+      communityAuthor: { $exists: true },
+    })
+      .populate('author', 'firstName lastname email profilePhoto')
+      .populate('communityAuthor', 'name logo email')
+      .sort({ createdAt: -1 });
+    res.status(200).json({ blogs });
+  } catch (error) {
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+export const communityBlogs = async (req, res) => {};
