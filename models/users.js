@@ -54,6 +54,10 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
     },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
     followers: [
       {
         type: mongoose.Schema.Types.ObjectId,

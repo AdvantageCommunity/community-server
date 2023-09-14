@@ -3,10 +3,15 @@ import {
   generateUniqueUsername,
   validUsername,
   validateEmail,
+  isTokenExpired,
 } from '../../utils/validations.js';
 import { uploadToS3 } from '../../connections/aws.js';
 import { OAuth2Client } from 'google-auth-library';
 import bcrypt from 'bcryptjs';
+import Token from '../../models/token.js';
+import sendMail from '../../utils/sendMail.js';
+import crypto from 'crypto';
+
 export const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
   if (!username)
@@ -14,36 +19,65 @@ export const registerUser = async (req, res) => {
   const isValidUsername = validUsername(username);
   if (!isValidUsername)
     return res.status(400).json({ message: 'Provide Valid Username!' });
-  const usernameExits = await User.findOne({ username });
-  if (usernameExits)
-    return res.status(400).json({ message: 'Username Already Exits!' });
-  if (!email) return res.status(400).json({ message: 'Email is Required!' });
-  const isValidEmail = validateEmail(email);
-  if (!isValidEmail)
-    return res.status(400).json({ message: 'Provide Valid Email!' });
-  const emailExist = await User.findOne({ email });
-  if (emailExist)
-    return res.status(400).json({ message: 'Email Already Exists!' });
-  if (!password && password.length < 8)
-    return res
-      .status(400)
-      .json({ message: 'Password should be more than 8 characters!' });
   try {
-    const newUser = new User({
+    const usernameExits = await User.findOne({ username: username });
+    if (usernameExits) {
+      return res.status(400).json({ message: 'Username Already Exits!' });
+    }
+    if (!email) return res.status(400).json({ message: 'Email is Required!' });
+    const isValidEmail = validateEmail(email);
+    if (!isValidEmail)
+      return res.status(400).json({ message: 'Provide Valid Email!' });
+    const emailExist = await User.findOne({ email });
+    if (emailExist)
+      return res.status(400).json({ message: 'Email Already Exists!' });
+    if (!password && password.length < 8)
+      return res
+        .status(400)
+        .json({ message: 'Password should be more than 8 characters!' });
+    let newUser = new User({
       email,
       password,
       username,
     });
-    const accessToken = await newUser.generateAuthToken();
-    res.cookie('userAccessToken', accessToken, {
-      httpOnly: true,
-      maxAge: 20 * 24 * 60 * 60 * 1000,
+    newUser = await newUser.save();
+
+    // const accessToken = await newUser.generateAuthToken();
+    // res.cookie('userAccessToken', accessToken, {
+    //   httpOnly: true,
+    //   maxAge: 20 * 24 * 60 * 60 * 1000,
+    // });
+    const token = new Token({
+      user: newUser._id.toString(),
+      token: crypto.randomBytes(32).toString('hex'),
     });
-    await newUser.save();
-    return res
-      .status(201)
-      .json({ message: 'User Registered Successfully!', token: accessToken });
+    await token.save();
+    const url = `${process.env.CLIENT_URL}/users/${newUser.username}/verify/${token.token}`;
+    await sendMail(newUser.email, 'Verify Your Email!', url);
+    return res.status(201).json({
+      message: 'An Email has been sent to your Email. Please Verify!',
+    });
   } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+export const verifyEmailLink = async (req, res) => {
+  const { username, token } = req.params;
+  if (!username)
+    return res.status(400).json({ message: 'Provide username id.' });
+  if (!token) return res.status(400).json({ message: 'Provide Token.' });
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    const tokenExists = await Token.findOne({ user: user._id, token });
+    if (!tokenExists)
+      return res.status(400).json({ message: 'Invalid Token.' });
+    user.verified = true;
+    await user.save();
+    await Token.deleteOne({ _id: tokenExists._id });
+    res.status(200).json({ message: 'Email Verified Successfullyy!' });
+  } catch (error) {
+    console.log('error in verifyEmailLink api : ' + error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -72,6 +106,41 @@ export const loginUser = async (req, res) => {
     const validPassword = await bcrypt.compare(password, userExist.password);
     if (!validPassword)
       return res.status(401).json({ message: 'Incorrect Password!' });
+    if (!userExist.verified) {
+      let token = await Token.findOne({ user: userExist._id });
+
+      if (!token) {
+        token = new Token({
+          user: userExist._id,
+          token: crypto.randomBytes(32).toString('hex'),
+        });
+        await token.save();
+        const url = `${process.env.CLIENT_URL}/users/${userExist.username}/verify/${token.token}`;
+        await sendMail(userExist.email, 'Verify Your Email!', url);
+        return res.status(201).json({
+          message: 'An Email has been sent to your Email. Please Verify!',
+        });
+      } else {
+        if (isTokenExpired(token)) {
+          await Token.deleteOne({ _id: token._id });
+          token = new Token({
+            user: userExist._id,
+            token: crypto.randomBytes(32).toString('hex'),
+          });
+          await token.save();
+          const url = `${process.env.CLIENT_URL}/users/${userExist.username}/verify/${token.token}`;
+          await sendMail(userExist.email, 'Verify Your Email!', url);
+          return res.status(201).json({
+            message: 'An Email has been sent to your Email. Please Verify!',
+          });
+        }
+
+        return res.status(400).json({
+          message:
+            'An Email has already been sent to your Email. Please Verify!',
+        });
+      }
+    }
     const accessToken = await userExist.generateAuthToken();
     res.cookie('userAccessToken', accessToken, {
       httpOnly: true,

@@ -10,6 +10,7 @@ import {
   unFollowUser,
   getUserFollowings,
   getUserFollowers,
+  verifyEmailLink,
 } from '../../controllers/user/users.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
 import { upload } from '../../connections/aws.js';
@@ -18,6 +19,7 @@ const router = express.Router();
 router.post('/auth/register', registerUser);
 router.post('/auth/login', loginUser);
 router.post('/auth/google-auth', googleAuth);
+router.get('/auth/:username/verify/:token', verifyEmailLink);
 router.patch(
   '/profile/me',
   upload.single('profilePhoto'),

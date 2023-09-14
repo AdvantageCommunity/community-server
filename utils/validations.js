@@ -70,3 +70,10 @@ export function isValidContacts(arr) {
   // If all items in the array meet the criteria, return true
   return true;
 }
+// Example "isExpired" function in JavaScript
+export function isTokenExpired(token) {
+  const now = new Date(); // Current date and time
+  const expirationTime = new Date(token.createdAt.getTime() + 20); // Add 1 hour to createdAt
+
+  return now > expirationTime; // Compare current date with expiration time
+}
