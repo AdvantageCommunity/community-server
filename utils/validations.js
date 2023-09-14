@@ -73,7 +73,7 @@ export function isValidContacts(arr) {
 // Example "isExpired" function in JavaScript
 export function isTokenExpired(token) {
   const now = new Date(); // Current date and time
-  const expirationTime = new Date(token.createdAt.getTime() + 20); // Add 1 hour to createdAt
+  const expirationTime = new Date(token.createdAt.getTime() + 3600); // Add 1 hour to createdAt
 
   return now > expirationTime; // Compare current date with expiration time
 }
