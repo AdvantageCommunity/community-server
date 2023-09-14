@@ -43,13 +43,14 @@ router.post(
   postCommunityEvent
 );
 router.patch(
-  '/:communityId/event/:eventId',
+  '/:communityId/event/:slug',
+  upload.single('eventBanner'),
   isUserAuthenticated,
   checkCommunityAdmin,
   updateCommunityEvent
 );
 router.delete(
-  '/:communityId/event',
+  '/:communityId/event/:slug',
   isUserAuthenticated,
   checkCommunityAdmin,
   deleteCommunityEvent

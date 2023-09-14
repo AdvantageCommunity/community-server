@@ -34,6 +34,12 @@ const eventSchema = new mongoose.Schema(
       ref: 'Community',
       required: true,
     },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     attendees: [
       {
         type: mongoose.Schema.Types.ObjectId,
