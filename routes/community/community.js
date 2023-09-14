@@ -63,5 +63,6 @@ router.get('/:communityId/admin', isUserAuthenticated, communityAdmins);
 router.post('/:communityId/join', isUserAuthenticated, joinCommunity);
 // Leave a community
 router.post('/:communityId/leave', isUserAuthenticated, leaveCommunity);
+// Events
 
 export default router;

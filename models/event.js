@@ -10,31 +10,28 @@ const eventSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    location: {
+    venue: {
       type: String,
       required: true,
       trim: true,
     },
     eventType: {
       type: String,
-      enum: ['Online', 'Offline'],
+      enum: ['online', 'offline'],
       required: true,
     },
-    startDate: {
+    date: {
       type: Date,
       required: true,
     },
-    endDate: {
-      type: Date,
-      required: true,
-    },
+
     registrationDeadline: {
       type: Date,
       required: true,
     },
     organizer: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Community',
       required: true,
     },
     attendees: [

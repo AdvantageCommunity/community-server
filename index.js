@@ -9,7 +9,7 @@ import userBlogRoutes from './routes/user/blog.js';
 import userChatRoutes from './routes/user/chat/chat.js';
 import userMessageRoutes from './routes/user/chat/message.js';
 import communityRoutes from './routes/community/community.js';
-import communityBlogRoutes from './routes/community/blog/communityBlog.js';
+import communityBlogRoutes from './routes/community/communityEventAndBlog.js';
 import { connectDB } from './connections/mongoDB.js';
 // Initializing DOTENV
 dotenv.config();
