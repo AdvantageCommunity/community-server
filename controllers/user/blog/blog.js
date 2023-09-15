@@ -28,7 +28,9 @@ export const postBlog = async (req, res) => {
       author: req.rootUser._id,
     });
     await blog.save();
-    return res.status(201).json({ message: 'Blog Added Successfully!' });
+    req.rootUser.blogs.push(blog._id);
+    await req.rootUser.save();
+    return res.status(201).json({ message: 'Blog Added Successfully!', blog });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -86,6 +88,11 @@ export const deleteBlog = async (req, res) => {
     });
     if (!blog) return res.status(404).json({ message: 'Blog Not Found!' });
     const deletedBlog = await Blog.findByIdAndDelete(blog._id);
+    req.rootUser.blogs = req.rootUser.blogs.filter(
+      (bl) => bl._id.toString() !== blog._id
+    );
+    await req.rootUser.save();
+
     if (!deletedBlog)
       return res
         .status(400)
