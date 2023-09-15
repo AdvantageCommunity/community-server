@@ -7,13 +7,9 @@ import {
   fetchUserChats,
 } from '../../../controllers/user/chat/chat.js';
 const router = express.Router();
-router.post('/:userId', isUserAuthenticated, accessUserChat);
 router.get('/', isUserAuthenticated, fetchUserChats);
-router.post(
-  '/community-room/chat/:roomId',
-  isUserAuthenticated,
-  accessRoomChat
-);
-router.get('/community-room/chat/:roomId', isUserAuthenticated, fetchAllRooms);
+router.get('/community-room/all', isUserAuthenticated, fetchAllRooms);
+router.post('/:userId', isUserAuthenticated, accessUserChat);
+router.post('/:communityId/room/:roomId', isUserAuthenticated, accessRoomChat);
 
 export default router;

@@ -25,6 +25,7 @@ export const createCommunityRoom = async (req, res) => {
       description,
       photo: result.Location,
       community: communityId,
+      participants: [{ userId: req.rootUser._id, role: 'admin' }],
     });
 
     room = await room.save();
@@ -107,7 +108,10 @@ export const getCommunityRooms = async (req, res) => {
     const rooms = await communityRoom
       .find({ community: communityId })
       .populate('community', 'name logo descriptio members')
-      .populate('participants', 'firstName lastName username profilePhoto');
+      .populate(
+        'participants.userId',
+        'firstName lastName username profilePhoto'
+      );
     res.status(200).json({ rooms });
   } catch (error) {
     console.error('Error in getCommunityRooms:', error);
@@ -124,7 +128,10 @@ export const getCommunityRoomById = async (req, res) => {
         _id: roomId,
       })
       .populate('community', 'name logo descriptio members')
-      .populate('participants', 'firstName lastName username profilePhoto');
+      .populate(
+        'participants.userId',
+        'firstName lastName username profilePhoto'
+      );
     res.status(200).json({ room });
   } catch (error) {
     console.error('Error in getCommunityRoomById:', error);

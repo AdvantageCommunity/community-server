@@ -53,7 +53,7 @@ export const allUserMessages = async (req, res) => {
     if (!chatExists)
       return res.status(403).json({ message: 'You cannot access this chat.' });
     const messages = await Message.find({ chat: chatId })
-      .populate('sender', '-password -interests')
+      .populate('sender', 'username profilePhoto _id')
       .populate('chat');
     res.status(200).json({ messages });
   } catch (error) {
@@ -88,6 +88,7 @@ export const sendMessageInRoom = async (req, res) => {
     });
     room.latestMessage = newMessage._id;
     await room.save();
+    res.status(201).json({ message: 'Message Sent.', msg: newMessage });
   } catch (error) {
     console.log('Error in sendMessageInRoom API : ', error);
     res.status(500).json({ message: error.message });
@@ -102,16 +103,14 @@ export const allRoomMessages = async (req, res) => {
   try {
     const roomExists = await communityRoom.findOne({
       _id: roomId,
-      participants: {
-        $elemMatch: {
-          $eq: req.rootUser._id,
-        },
-      },
+      'participants.userId': req.rootUser._id,
     });
     if (!roomExists)
       return res.status(403).json({ message: 'You cannot access this chat.' });
-    const messages = await Message.find({ chat: roomId })
-      .populate('sender', '-password -interests')
+    const messages = await Message.find({
+      chat: roomId,
+    })
+      .populate('sender', 'username profilePhoto _id')
       .populate('chat');
     res.status(200).json({ messages });
   } catch (error) {

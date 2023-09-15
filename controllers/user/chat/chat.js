@@ -1,5 +1,6 @@
 import communityRoom from '../../../models/chat/communityRoom.js';
 import userChat from '../../../models/chat/userChat.js';
+import Community from '../../../models/community.js';
 import User from '../../../models/users.js';
 
 export const accessUserChat = async (req, res) => {
@@ -76,20 +77,34 @@ export const fetchUserChats = async (req, res) => {
   }
 };
 export const accessRoomChat = async (req, res) => {
-  const { roomId } = req.params;
+  const { communityId, roomId } = req.params;
   if (!roomId) return res.status(400).json({ message: 'Provide Room id.' });
+  if (!communityId)
+    return res.status(400).json({ message: 'Provide community id.' });
+
   try {
+    const community = await Community.findOne({ _id: communityId });
+    if (!community)
+      return res.status(404).json({ message: 'Community not found.' });
+    if (!community.members.includes(req.rootUser._id))
+      return res
+        .status(400)
+        .json({ message: 'You need to join the community first.' });
     let room = await communityRoom.findById(roomId);
     if (!room) return res.status(404).json({ message: 'Room not found.' });
-    if (room.participants.includes(req.rootUser._id)) {
-      room = room
-        .populate('owners', '-password')
-        .populate('participants', '-password -interests');
+    const userExists = room.participants.find(
+      (user) => user.userId.toString() === req.rootUser._id.toString()
+    );
+    if (userExists) {
+      room = room.populate('participants.userId', '-password -interests');
       return res
         .status(200)
         .json({ message: 'User is already in the room', room });
     } else {
-      room.participants.push(req.rootUser._id);
+      room.participants.push({
+        userId: req.rootUser._id,
+        role: 'member',
+      });
       await room.save();
       return res.status(201).json({ message: 'User joined room', room });
     }
@@ -102,17 +117,9 @@ export const fetchAllRooms = async (req, res) => {
   try {
     let rooms = await communityRoom
       .find({
-        $and: [
-          {
-            participants: {
-              $elemMatch: {
-                $eq: req.rootUser._id,
-              },
-            },
-          },
-        ],
+        'participants.userId': req.rootUser._id,
       })
-      .populate('owners', '-password -interests')
+      .populate('community', 'name logo description members')
       .populate('participants', '-password -interests');
     res.status(200).json({ rooms });
   } catch (error) {

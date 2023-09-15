@@ -24,8 +24,15 @@ const communityRoomSchema = new mongoose.Schema({
 
   participants: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+      role: {
+        type: String,
+        enum: ['member', 'admin'],
+        default: 'member',
+      },
     },
   ],
 });
