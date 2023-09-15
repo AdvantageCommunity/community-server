@@ -10,6 +10,7 @@ import userChatRoutes from './routes/user/chat/chat.js';
 import userMessageRoutes from './routes/user/chat/message.js';
 import communityRoutes from './routes/community/community.js';
 import communityBlogRoutes from './routes/community/communityEventAndBlog.js';
+import communityRoomRoutes from './routes/community/communityRoom.js';
 import { connectDB } from './connections/mongoDB.js';
 // Initializing DOTENV
 dotenv.config();
@@ -30,6 +31,7 @@ app.use('/api/v1/public', publicRoutes);
 // Community related routes
 app.use('/api/v1/community', communityRoutes);
 app.use('/api/v1/community', communityBlogRoutes);
+app.use('/api/v1/community', communityRoomRoutes);
 // Waitlist Route
 app.use('/api/v1/waitlist', waitlistRoutes);
 

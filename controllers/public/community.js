@@ -114,9 +114,7 @@ export const searchEvent = async (req, res) => {
     if (tags) {
       tags = Array.isArray(tags) ? tags : tags.split(',');
       const tagRegexArray = tags.map((tag) => new RegExp(tag, 'i'));
-      console.log(tagRegexArray);
       query.tags = { $in: tagRegexArray };
-      console.log(query.tags);
     }
 
     const events = await Event.find(query).exec();

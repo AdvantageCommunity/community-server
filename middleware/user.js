@@ -34,6 +34,7 @@ export const isUserAuthenticated = async (req, res, next) => {
 };
 export const checkCommunityAdmin = async (req, res, next) => {
   const { communityId } = req.params;
+  console.log(req.params);
   const { _id: userId } = req.rootUser;
   if (!communityId)
     return res.status(400).json({ message: 'Provide community Id.' });
