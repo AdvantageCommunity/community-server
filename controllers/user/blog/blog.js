@@ -2,6 +2,9 @@ import slugify from 'slugify';
 import Blog from '../../../models/blog.js';
 import Event from '../../../models/event.js';
 import { uploadToS3 } from '../../../connections/aws.js';
+import { io } from '../../../index.js';
+import User from '../../../models/users.js';
+import Community from '../../../models/community.js';
 export const postBlog = async (req, res) => {
   const { title, content, tags } = req.body;
   const coverImage = req.file;
@@ -119,6 +122,34 @@ export const likeABlog = async (req, res) => {
     ) {
       blogToLike.likes.push({ _id: userId, createdAt: new Date() });
       await blogToLike.save();
+      // Socket Io related Code
+      // const notification = {
+      //   message: `${req.rootUser.username} liked on your blog`,
+      //   type: 'like',
+      //   timestamp: new Date(),
+      //   isRead: false,
+      // };
+      // const isCommunityBlog = !!blogToLike.communityAuthor;
+      // if (isCommunityBlog) {
+      //   // Blog is authored by a community
+      //   const community = await Community.findOne({
+      //     _id: blogToLike.communityAuthor,
+      //   }).populate('admins');
+
+      //   if (community) {
+      //     // Iterate through the admins of the community
+      //     community.admins.forEach(async (admin) => {
+      //       admin?.notifications?.push(notification);
+      //       await admin?.save();
+      //       io.to(admin?._id).emit('notification', notification);
+      //     });
+      //   }
+      // } else {
+      //   const recipient = await User.findOne({ _id: blogToLike.author });
+      //   recipient?.notifications?.push(notification);
+      //   await recipient.save();
+      //   io.to(recipient._id).emit('notification', notification);
+      // }
       return res
         .status(400)
         .json({ message: 'Blog liked successfully', likes: blogToLike.likes });
@@ -134,36 +165,34 @@ export const likeABlog = async (req, res) => {
 export const unLikeABlog = async (req, res) => {
   const { blogId } = req.params;
   const userId = req.rootUser._id;
+  console.log(userId);
+
   if (!blogId) return res.status(400).json({ message: 'Provide blog id.' });
+
   try {
     const blogToUnLike = await Blog.findOne({ _id: blogId });
+    console.log(blogToUnLike.likes);
+
     if (!blogToUnLike)
       return res.status(404).json({ message: 'Blog not found.' });
+
     if (
       blogToUnLike.likes.some(
         (like) => like._id.toString() === userId.toString()
       )
     ) {
-      const likeIdex = blogToUnLike.likes.findIndex(
-        (like) => like._id.toString() === userId.toString()
+      // Remove the like from the likes array
+      blogToUnLike.likes = blogToUnLike.likes.filter(
+        (like) => like._id.toString() !== userId.toString()
       );
-      const selectedLike = blogToUnLike.likes[likeIdex];
-      if (selectedLike.user.toString() === userId.toString()) {
-        if (likeIdex === -1)
-          return res
-            .status(404)
-            .json({ message: 'You have not liked this blog' });
-        blogToUnLike.likes.splice(likeIdex, 1);
-        await blogToUnLike.save();
-        return res.status(400).json({
-          message: 'Blog unliked successfully',
-          likes: blogToUnLike.likes,
-        });
-      } else {
-        return res
-          .status(403)
-          .json({ message: 'Your not allowed to unlike this blog' });
-      }
+
+      await blogToUnLike.save();
+
+      // Return a status code of 200 OK for a successful unlike
+      return res.status(200).json({
+        message: 'Blog unliked successfully',
+        likes: blogToUnLike.likes,
+      });
     } else {
       return res.status(400).json({ message: 'You have not liked this blog' });
     }
@@ -187,6 +216,38 @@ export const commentOnBlog = async (req, res) => {
     blog.comments.push(comment);
     await blog.save();
     const savedComment = blog.comments[blog.comments.length - 1];
+    // Socket Io related Code
+    const notification = {
+      message: `${req.rootUser.username} commented on your blog`,
+      type: 'comment',
+      timestamp: new Date(),
+      isRead: false,
+    };
+    const isCommunityBlog = !!blog.communityAuthor;
+    if (isCommunityBlog) {
+      // Blog is authored by a community
+      const community = await Community.findOne({
+        _id: blog.communityAuthor,
+      }).populate('admins');
+
+      if (community) {
+        // Iterate through the admins of the community
+        community.admins.forEach(async (admin) => {
+          admin.notifications.push(notification);
+          await admin.save();
+          io.to(admin._id).emit('notification', notification);
+        });
+      }
+    } else {
+      // Blog is authored by a user
+      const recipient = await User.findOne({ _id: blog.author });
+
+      // Handle user-authored blog as before
+
+      recipient.notifications.push(notification);
+      await recipient.save();
+      io.to(recipient._id).emit('notification', notification);
+    }
     res.status(201).json({ message: 'Comment Added!', comment: savedComment });
   } catch (error) {
     res.status(500).json({ message: error.message });

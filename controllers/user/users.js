@@ -11,7 +11,7 @@ import bcrypt from 'bcryptjs';
 import Token from '../../models/token.js';
 import sendMail from '../../utils/sendMail.js';
 import crypto from 'crypto';
-
+import { io } from '../../index.js';
 export const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
   if (!username)
@@ -202,11 +202,9 @@ export const updateUser = async (req, res) => {
   );
   if (!isValidUpdate)
     return res.status(400).json({ message: 'Provide Valid Updates!' });
-
   try {
     if (requestedUpdates.includes('username')) {
       const usernameExits = await User.findOne({ username: req.body.username });
-
       if (
         usernameExits &&
         usernameExits._id?.toString() !== req.rootUser._id?.toString()
@@ -315,6 +313,16 @@ export const followUser = async (req, res) => {
       userToFollow.followers.push(activeUserId);
       await req.rootUser.save();
       await userToFollow.save();
+      const notification = {
+        message: `${req.rootUser.username} followed you`,
+        type: 'like',
+        timestamp: new Date(),
+        isRead: false,
+      };
+      req.rootUser.notifications.push(notification);
+      await req.rootUser.save();
+      io.to(userToFollow._id).emit('notification', notification);
+
       res.status(200).json({ message: 'User followed successfully' });
     } else {
       res.status(400).json({ message: 'You already follow this user.' });

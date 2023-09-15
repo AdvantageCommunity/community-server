@@ -39,7 +39,7 @@ app.use('/api/v1/waitlist', waitlistRoutes);
 const server = app.listen(PORT, () => {
   console.log(`Server listening on PORT - ${PORT}`);
 });
-const io = new Server.Server(server, {
+export const io = new Server.Server(server, {
   pingTimeout: 60000, //after 60 secs it will close the connection
   cors: {
     origin: process.env.CLIENT_URL,
@@ -48,7 +48,7 @@ const io = new Server.Server(server, {
 io.on('connection', (socket) => {
   console.log('connected to socket');
   socket.on('setup', (userData) => {
-    socket.join(userData._id); // creating a room using given user's id.
+    socket.join(userData._id); // creating a space for the user using given user's id.
     socket.emit('connected');
   });
   socket.on('join chat', (room) => {
@@ -61,7 +61,7 @@ io.on('connection', (socket) => {
     const chat = newMessageRecieved.chat;
     if (!chat.users) return console.log('chat.users is not defined');
     chat.participants.forEach((participant) => {
-      if (participant._id === chat.sender_id) return;
+      if (participant._id === chat.sender._id) return;
       socket.in(participant._id).emit('message recieved', newMessageRecieved);
     });
   });

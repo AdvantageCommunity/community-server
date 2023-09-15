@@ -2,6 +2,7 @@ import Message from '../../../models/chat/message.js';
 import userChat from '../../../models/chat/userChat.js';
 import User from '../../../models/users.js';
 import communityRoom from '../../../models/chat/communityRoom.js';
+import { io } from '../../../index.js';
 
 export const sendMessage = async (req, res) => {
   const { chatId } = req.params;
@@ -28,10 +29,21 @@ export const sendMessage = async (req, res) => {
       select: 'username profilePic email',
     });
     const chat = await userChat.findOne({ _id: chatId });
+
     if (chat) {
       chat.latestMessage = newMessage._id;
       await chat.save();
     }
+    let recipient = chat.participants.splice(req.rootUser._id, 1);
+    const notification = {
+      message: `${req.rootUser.username} sent you a message`,
+      type: 'message',
+      timestamp: new Date(),
+      isRead: false,
+    };
+    req.rootUser.notifications.push(notification);
+    await req.rootUser.save();
+    io.to(recipient).emit('notification', notification);
     return res.status(201).json({ message: newMessage });
   } catch (error) {
     console.log('Error in Send Message API : ', error);
@@ -88,6 +100,16 @@ export const sendMessageInRoom = async (req, res) => {
     });
     room.latestMessage = newMessage._id;
     await room.save();
+
+    const notification = {
+      message: `${req.rootUser.username} sent a message in ${room.name}`,
+      type: 'message',
+      timestamp: new Date(),
+      isRead: false,
+    };
+    req.rootUser.notifications.push(notification);
+    await req.rootUser.save();
+    io.to(recipient).emit('notification', notification);
     res.status(201).json({ message: 'Message Sent.', msg: newMessage });
   } catch (error) {
     console.log('Error in sendMessageInRoom API : ', error);

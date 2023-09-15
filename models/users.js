@@ -58,6 +58,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    notifications: [
+      {
+        message: String,
+        type: String,
+        timestamp: Date,
+        isRead: Boolean,
+      },
+    ],
     followers: [
       {
         type: mongoose.Schema.Types.ObjectId,
