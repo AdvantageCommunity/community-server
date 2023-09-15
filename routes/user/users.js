@@ -11,9 +11,11 @@ import {
   getUserFollowings,
   getUserFollowers,
   verifyEmailLink,
+  userFavorites,
 } from '../../controllers/user/users.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
 import { upload } from '../../connections/aws.js';
+import { favoriteEvent } from '../../controllers/user/blog/blog.js';
 const router = express.Router();
 
 router.post('/auth/register', registerUser);
@@ -33,5 +35,6 @@ router.post('/auth/me/logout', isUserAuthenticated, logoutUser);
 router.patch('/:userId/follow', isUserAuthenticated, followUser);
 router.post('/:userId/follow', isUserAuthenticated, followUser);
 router.delete('/:userId/unfollow', isUserAuthenticated, unFollowUser);
-
+router.post('/event/:eventId/favorite', isUserAuthenticated, favoriteEvent);
+router.get('/me/favorites', isUserAuthenticated,userFavorites);
 export default router;

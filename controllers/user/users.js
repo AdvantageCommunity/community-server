@@ -377,3 +377,13 @@ export const getUserFollowers = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const userFavorites = async (req, res) => {
+  try {
+    const { favorites } = await User.findOne({ _id: req.rootUser._id })
+      .populate('favorites.blogs')
+      .populate('favorites.events');
+    res.status(200).json({ favorites });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

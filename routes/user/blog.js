@@ -7,6 +7,7 @@ import {
   commentOnBlog,
   unLikeABlog,
   deleteComment,
+  favoriteBlog,
 } from '../../controllers/user/blog/blog.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
 import { upload } from '../../connections/aws.js';
@@ -19,5 +20,6 @@ router.post('/:blogId/like', isUserAuthenticated, likeABlog);
 router.delete('/:blogId/like', isUserAuthenticated, unLikeABlog);
 router.post('/:blogId/comment', isUserAuthenticated, commentOnBlog);
 router.delete('/:blogId/comment', isUserAuthenticated, deleteComment);
+router.post('/:blogId/favorite', isUserAuthenticated, favoriteBlog);
 
 export default router;

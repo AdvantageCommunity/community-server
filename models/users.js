@@ -94,6 +94,20 @@ const userSchema = new mongoose.Schema(
         ref: 'Blog',
       },
     ],
+    favorites: {
+      blogs: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Blog',
+        },
+      ],
+      events: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Event',
+        },
+      ],
+    },
   },
   {
     timestamps: true,

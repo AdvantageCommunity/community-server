@@ -1,5 +1,6 @@
 import slugify from 'slugify';
 import Blog from '../../../models/blog.js';
+import Event from '../../../models/event.js';
 import { uploadToS3 } from '../../../connections/aws.js';
 export const postBlog = async (req, res) => {
   const { title, content, tags } = req.body;
@@ -224,6 +225,44 @@ export const deleteComment = async (req, res) => {
     } else {
       return res.status(404).json({ message: 'Comments Not Found' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const favoriteBlog = async (req, res) => {
+  const { blogId } = req.params;
+  if (!blogId) return res.status(400).json({ message: 'Provide blog id ' });
+  try {
+    const blogExists = await Blog.findOne({ _id: blogId });
+    if (!blogExists)
+      return res.status(404).json({ message: 'Blog not found.' });
+    if (req.rootUser.favorites.blogs.includes(blogExists._id)) {
+      return res
+        .status(400)
+        .json({ message: 'Blog already exists in Favorites.' });
+    }
+    req.rootUser.favorites.blogs.push(blogExists._id);
+    await req.rootUser.save();
+    res.status(200).json({ message: 'Blog Added to Favorites.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const favoriteEvent = async (req, res) => {
+  const { eventId } = req.params;
+  if (!eventId) return res.status(400).json({ message: 'Provide event id ' });
+  try {
+    const eventExists = await Event.findOne({ _id: eventId });
+    if (!eventExists)
+      return res.status(404).json({ message: 'Event not found.' });
+    if (req.rootUser.favorites.events.includes(eventExists._id)) {
+      return res
+        .status(400)
+        .json({ message: 'Event already exists in Favorites.' });
+    }
+    req.rootUser.favorites.events.push(eventExists._id);
+    await req.rootUser.save();
+    res.status(200).json({ message: 'Event Added to Favorites.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
