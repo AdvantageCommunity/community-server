@@ -10,6 +10,7 @@ import {
   getCommunityRooms,
   updateCommunityRoom,
 } from '../../controllers/community/room/communityRoom.js';
+import { upload } from '../../connections/aws.js';
 const router = express.Router();
 router.get('/:communityId/room/all', isUserAuthenticated, getCommunityRooms);
 router.get(
@@ -18,19 +19,21 @@ router.get(
   getCommunityRoomById
 );
 router.post(
-  '/communityId/room',
+  '/:communityId/room',
+  upload.single('photo'),
   isUserAuthenticated,
   checkCommunityAdmin,
   createCommunityRoom
 );
 router.patch(
-  '/communityId/room/:roomId',
+  '/:communityId/room/:roomId',
+  upload.single('photo'),
   isUserAuthenticated,
   checkCommunityAdmin,
   updateCommunityRoom
 );
 router.delete(
-  '/communityId/room/:roomId',
+  '/:communityId/room/:roomId',
   isUserAuthenticated,
   checkCommunityAdmin,
   deleteCommunityRoom

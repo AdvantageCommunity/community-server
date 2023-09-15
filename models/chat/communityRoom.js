@@ -9,17 +9,18 @@ const communityRoomSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  photo: {
+    type: String,
+  },
   latestMessage: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Message',
   },
-  owners: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-  ],
+  community: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Community',
+    required: true,
+  },
 
   participants: [
     {
