@@ -15,7 +15,7 @@ import {
   allCommunities,
   allEvents,
   communitybyId,
-  eventById,
+  eventBySlug,
   getPopularCommunityTags,
   pastEvents,
   searchCommunity,
@@ -44,7 +44,7 @@ router.get('/community/blog/all', allCommunitiesBlogs);
 // Community Events
 router.get('/community/event/search', searchEvent);
 router.get('/community/event/all', allEvents);
-router.get('/community/event/:eventId', eventById);
+router.get('/community/event/:slug', eventBySlug);
 router.get('/community/event/all/upcoming', upcommingEvents);
 router.get('/community/event/all/past', pastEvents);
 

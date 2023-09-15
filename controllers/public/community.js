@@ -79,12 +79,12 @@ export const allEvents = async (req, res) => {
     return res.status(500).json({ error: 'Server error' });
   }
 };
-export const eventById = async (req, res) => {
-  const { eventId } = req.params;
-  if (!eventId) res.status(404).json({ message: 'Provide event id.' });
+export const eventBySlug = async (req, res) => {
+  const { slug } = req.params;
+  if (!slug) res.status(404).json({ message: 'Provide event slug.' });
 
   try {
-    const event = await Event.findOne({ _id: eventId }).populate('organizer');
+    const event = await Event.findOne({ slug }).populate('organizer');
     return res.status(200).json({ event });
   } catch (error) {
     console.error('Error in eventById API:', error);
