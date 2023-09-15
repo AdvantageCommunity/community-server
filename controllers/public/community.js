@@ -1,5 +1,5 @@
 import Community from '../../models/community.js';
-
+import Event from '../../models/event.js';
 export const allCommunities = async (req, res) => {
   try {
     const communities = await Community.find({
@@ -60,7 +60,91 @@ export const getPopularCommunityTags = async (req, res) => {
 
     return res.status(200).json({ tags: tagNames });
   } catch (error) {
-    console.error(error);
+    console.error('Error in getPopularCommunityTags API:', error);
+
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+// Events
+
+export const allEvents = async (req, res) => {
+  try {
+    const events = await Event.find()
+      .sort({ createdAt: -1 })
+      .populate('organizer');
+    res.status(200).json({ events });
+  } catch (error) {
+    console.error('Error in allEvents API:', error);
+
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+export const eventById = async (req, res) => {
+  const { eventId } = req.params;
+  if (!eventId) res.status(404).json({ message: 'Provide event id.' });
+
+  try {
+    const event = await Event.findOne({ _id: eventId }).populate('organizer');
+    return res.status(200).json({ event });
+  } catch (error) {
+    console.error('Error in eventById API:', error);
+
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+export const searchEvent = async (req, res) => {
+  let { title, startDate, endDate, venue, eventType, tags } = req.query;
+
+  const query = {};
+
+  try {
+    if (title) {
+      query.title = { $regex: new RegExp(title, 'i') }; // Case-insensitive title search
+    }
+
+    if (startDate && endDate) {
+      query.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    }
+    if (venue) {
+      query.venue = { $regex: new RegExp(venue, 'i') };
+    }
+    if (eventType) {
+      query.eventType = { $regex: new RegExp(eventType, 'i') };
+    }
+    if (tags) {
+      tags = Array.isArray(tags) ? tags : tags.split(',');
+      const tagRegexArray = tags.map((tag) => new RegExp(tag, 'i'));
+      console.log(tagRegexArray);
+      query.tags = { $in: tagRegexArray };
+      console.log(query.tags);
+    }
+
+    const events = await Event.find(query).exec();
+
+    res.status(200).json({ events });
+  } catch (error) {
+    console.error('Error in event search API:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+export const upcommingEvents = async (req, res) => {
+  const currentDate = new Date();
+  try {
+    const events = await Event.find({ date: { $gt: currentDate } });
+    res.status(200).json({ events });
+  } catch (error) {
+    console.error('Error in upcommingEvents API:', error);
+
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+export const pastEvents = async (req, res) => {
+  const currentDate = new Date();
+  try {
+    const events = await Event.find({ date: { $lt: currentDate } });
+    res.status(200).json({ events });
+  } catch (error) {
+    console.error('Error in pastEvents API:', error);
     return res.status(500).json({ error: 'Server error' });
   }
 };
