@@ -343,7 +343,7 @@ export const joinCommunity = async (req, res) => {
     const community = await Community.findOne({
       _id: communityId,
       status: 'active',
-    });
+    }).populate('admins');
     if (!community)
       return res.status(404).json({ message: 'Community not found.' });
     if (community.members.includes(req.rootUser._id)) {
@@ -352,12 +352,23 @@ export const joinCommunity = async (req, res) => {
         .json({ message: 'User is already a member of the community.' });
     }
     community.members.push(req.rootUser._id);
+
     req.rootUser.communities.push({
       community: community._id,
     });
     await community.save();
     await req.rootUser.save();
+    let notification = {
+      message: `${req.rootUser.username} has joined community`,
+      actionType: 'joined',
+      isRead: false,
+    };
 
+    community.admins.forEach(async (admin) => {
+      admin.notifications.push(notification);
+      await admin.save();
+      io.to(admin._id).emit('notification', notification);
+    });
     res
       .status(200)
       .json({ message: 'User has joined the community successfully.' });
@@ -374,7 +385,7 @@ export const leaveCommunity = async (req, res) => {
     const community = await Community.findOne({
       _id: communityId,
       status: 'active',
-    });
+    }).populate('admins');
     if (!community)
       return res.status(404).json({ message: 'Community not found.' });
     if (!community.members.includes(req.rootUser._id))
@@ -389,6 +400,17 @@ export const leaveCommunity = async (req, res) => {
     );
     await community.save();
     await req.rootUser.save();
+    let notification = {
+      message: `${req.rootUser.username} has left community`,
+      actionType: 'left',
+      isRead: false,
+    };
+
+    community.admins.forEach(async (admin) => {
+      admin.notifications.push(notification);
+      await admin.save();
+      io.to(admin._id).emit('notification', notification);
+    });
     return res
       .status(200)
       .json({ message: 'User has left the community successfully.' });

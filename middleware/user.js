@@ -41,10 +41,12 @@ export const checkCommunityAdmin = async (req, res, next) => {
   if (!userId)
     return res.status(400).json({ message: 'User not authenticated.' });
   try {
-    const community = await Community.findOne({ _id: communityId });
+    const community = await Community.findOne({ _id: communityId })
+      .populate('admins')
+      .populate('members');
     if (!community)
       return res.status(404).json({ message: 'Community not found.' });
-    if (!community.admins.includes(userId))
+    if (!community.admins.some((admin) => admin._id.equals(userId)))
       return res
         .status(403)
         .json({ message: 'You are not an admin of this community.' });

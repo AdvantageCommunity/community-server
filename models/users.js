@@ -61,9 +61,15 @@ const userSchema = new mongoose.Schema(
     notifications: [
       {
         message: String,
-        type: String,
-        timestamp: Date,
-        isRead: Boolean,
+        actionType: String,
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+        isRead: {
+          type: Boolean,
+          default: false,
+        },
       },
     ],
     followers: [

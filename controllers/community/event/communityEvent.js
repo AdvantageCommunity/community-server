@@ -1,6 +1,8 @@
 import Event from '../../../models/event.js';
 import slugify from 'slugify';
 import { uploadToS3 } from '../../../connections/aws.js';
+import { io } from '../../../index.js';
+
 export const postCommunityEvent = async (req, res) => {
   const {
     title,
@@ -61,6 +63,22 @@ export const postCommunityEvent = async (req, res) => {
       slug,
     });
     const savedEvent = await event.save();
+    let notification = {
+      message: `${req.community.name} posted a new Event.`,
+      actionType: 'event',
+      isRead: false,
+    };
+    for (let member of req.community.members) {
+      if (
+        !req.community.admins.some(
+          (admin) => admin._id.toString() === member._id.toString()
+        )
+      ) {
+        member.notifications.push(notification);
+        await member.save();
+        io.to(member._id).emit('notification', notification);
+      }
+    }
     res
       .status(201)
       .json({ message: 'Event added successfully', event: savedEvent });

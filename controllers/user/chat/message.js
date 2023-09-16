@@ -28,22 +28,30 @@ export const sendMessage = async (req, res) => {
       path: 'chat.participants',
       select: 'username profilePic email',
     });
-    const chat = await userChat.findOne({ _id: chatId });
+    const chat = await userChat
+      .findOne({ _id: chatId })
+      .populate('participants');
 
     if (chat) {
       chat.latestMessage = newMessage._id;
       await chat.save();
     }
-    let recipient = chat.participants.splice(req.rootUser._id, 1);
+    const recipient = chat.participants.find(
+      (participant) =>
+        participant._id.toString() !== req.rootUser._id.toString()
+    );
+    if (!recipient)
+      return res.status(404).json({ message: 'Recipent not found.' });
     const notification = {
       message: `${req.rootUser.username} sent you a message`,
-      type: 'message',
+      actionType: 'message',
       timestamp: new Date(),
       isRead: false,
     };
-    req.rootUser.notifications.push(notification);
-    await req.rootUser.save();
-    io.to(recipient).emit('notification', notification);
+    recipient.notifications.push(notification);
+
+    await recipient.save();
+    io.to(recipient._id).emit('notification', notification);
     return res.status(201).json({ message: newMessage });
   } catch (error) {
     console.log('Error in Send Message API : ', error);
@@ -81,7 +89,9 @@ export const sendMessageInRoom = async (req, res) => {
       .status(400)
       .json({ message: 'Content and chat id should be present' });
   try {
-    const room = await communityRoom.findById(roomId);
+    const room = await communityRoom
+      .findById(roomId)
+      .populate('participants.userId');
     if (!room) return res.status(404).json({ message: 'Room not found.' });
     let newMessage = new Message({
       senderType: 'User',
@@ -101,16 +111,21 @@ export const sendMessageInRoom = async (req, res) => {
     room.latestMessage = newMessage._id;
     await room.save();
 
-    const notification = {
+    // Socket Io Notification related code
+    let notification = {
       message: `${req.rootUser.username} sent a message in ${room.name}`,
-      type: 'message',
-      timestamp: new Date(),
+      actionType: 'message',
       isRead: false,
     };
-    req.rootUser.notifications.push(notification);
-    await req.rootUser.save();
-    io.to(recipient).emit('notification', notification);
-    res.status(201).json({ message: 'Message Sent.', msg: newMessage });
+    room.participants.forEach(async (user) => {
+      if (req.rootUser._id.toString() !== user.userId._id.toString()) {
+        user.userId.notifications?.push(notification);
+        await user.userId.save();
+        io.to(user.userId._id).emit('notification', notification);
+      }
+    });
+    if (room)
+      res.status(201).json({ message: 'Message Sent.', msg: newMessage });
   } catch (error) {
     console.log('Error in sendMessageInRoom API : ', error);
     res.status(500).json({ message: error.message });

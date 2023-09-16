@@ -123,33 +123,38 @@ export const likeABlog = async (req, res) => {
       blogToLike.likes.push({ _id: userId, createdAt: new Date() });
       await blogToLike.save();
       // Socket Io related Code
-      // const notification = {
-      //   message: `${req.rootUser.username} liked on your blog`,
-      //   type: 'like',
-      //   timestamp: new Date(),
-      //   isRead: false,
-      // };
-      // const isCommunityBlog = !!blogToLike.communityAuthor;
-      // if (isCommunityBlog) {
-      //   // Blog is authored by a community
-      //   const community = await Community.findOne({
-      //     _id: blogToLike.communityAuthor,
-      //   }).populate('admins');
+      const notification = {
+        message: `${req.rootUser.username} liked on your blog`,
+        actionType: 'like',
+        isRead: false,
+      };
+      const isCommunityBlog = !!blogToLike.communityAuthor;
 
-      //   if (community) {
-      //     // Iterate through the admins of the community
-      //     community.admins.forEach(async (admin) => {
-      //       admin?.notifications?.push(notification);
-      //       await admin?.save();
-      //       io.to(admin?._id).emit('notification', notification);
-      //     });
-      //   }
-      // } else {
-      //   const recipient = await User.findOne({ _id: blogToLike.author });
-      //   recipient?.notifications?.push(notification);
-      //   await recipient.save();
-      //   io.to(recipient._id).emit('notification', notification);
-      // }
+      if (isCommunityBlog) {
+        // Blog is authored by a community
+        const community = await Community.findOne({
+          _id: blogToLike.communityAuthor,
+        }).populate('admins');
+
+        if (community) {
+          // Iterate through the admins of the community
+          community.admins.forEach(async (admin) => {
+            admin?.notifications?.push(notification);
+            await admin?.save();
+            io.to(admin?._id).emit('notification', notification);
+          });
+        }
+      } else {
+        const recipient = await User.findOne({
+          _id: blogToLike.author.toString(),
+        });
+
+        if (recipient) {
+          recipient.notifications.push(notification);
+          await recipient.save();
+          io.to(recipient._id).emit('notification', notification);
+        }
+      }
       return res
         .status(400)
         .json({ message: 'Blog liked successfully', likes: blogToLike.likes });
@@ -217,36 +222,36 @@ export const commentOnBlog = async (req, res) => {
     await blog.save();
     const savedComment = blog.comments[blog.comments.length - 1];
     // Socket Io related Code
-    const notification = {
-      message: `${req.rootUser.username} commented on your blog`,
-      type: 'comment',
-      timestamp: new Date(),
+    let notification = {
+      message: `${req.rootUser.username} commented on blog ${blog.title}`,
+      actionType: 'like',
       isRead: false,
     };
     const isCommunityBlog = !!blog.communityAuthor;
+
     if (isCommunityBlog) {
       // Blog is authored by a community
       const community = await Community.findOne({
         _id: blog.communityAuthor,
       }).populate('admins');
-
       if (community) {
         // Iterate through the admins of the community
         community.admins.forEach(async (admin) => {
-          admin.notifications.push(notification);
-          await admin.save();
-          io.to(admin._id).emit('notification', notification);
+          admin?.notifications?.push(notification);
+          await admin?.save();
+          io.to(admin?._id).emit('notification', notification);
         });
       }
     } else {
-      // Blog is authored by a user
-      const recipient = await User.findOne({ _id: blog.author });
+      const recipient = await User.findOne({
+        _id: blog.author.toString(),
+      });
 
-      // Handle user-authored blog as before
-
-      recipient.notifications.push(notification);
-      await recipient.save();
-      io.to(recipient._id).emit('notification', notification);
+      if (recipient) {
+        recipient.notifications.push(notification);
+        await recipient.save();
+        io.to(recipient._id).emit('notification', notification);
+      }
     }
     res.status(201).json({ message: 'Comment Added!', comment: savedComment });
   } catch (error) {

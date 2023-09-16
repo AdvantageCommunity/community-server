@@ -1,6 +1,7 @@
 import slugify from 'slugify';
 import { uploadToS3 } from '../../../connections/aws.js';
 import Blog from '../../../models/blog.js';
+import { io } from '../../../index.js';
 export const addCommunityBlog = async (req, res) => {
   const { title, content, tags } = req.body;
   const coverImage = req.file;
@@ -29,6 +30,22 @@ export const addCommunityBlog = async (req, res) => {
       communityAuthor: req.community._id,
     });
     await blog.save();
+    let notification = {
+      message: `${req.community.name} posted a new Blog.`,
+      actionType: 'blog',
+      isRead: false,
+    };
+    for (let member of req.community.members) {
+      if (
+        !req.community.admins.some(
+          (admin) => admin._id.toString() === member._id.toString()
+        )
+      ) {
+        member.notifications.push(notification);
+        await member.save();
+        io.to(member._id).emit('notification', notification);
+      }
+    }
     return res.status(201).json({ message: 'Blog Added Successfully!' });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -315,12 +315,12 @@ export const followUser = async (req, res) => {
       await userToFollow.save();
       const notification = {
         message: `${req.rootUser.username} followed you`,
-        type: 'like',
+        actionType: 'follow',
         timestamp: new Date(),
         isRead: false,
       };
-      req.rootUser.notifications.push(notification);
-      await req.rootUser.save();
+      userToFollow.notifications.push(notification);
+      await userToFollow.save();
       io.to(userToFollow._id).emit('notification', notification);
 
       res.status(200).json({ message: 'User followed successfully' });
