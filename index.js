@@ -24,7 +24,11 @@ const corsOptions = {
   allowedHeaders: 'Content-Type,Authorization',
 };
 
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: '*',
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -49,7 +53,7 @@ const server = app.listen(PORT, () => {
 export const io = new Server.Server(server, {
   pingTimeout: 60000, //after 60 secs it will close the connection
   cors: {
-    origin: [process.env.CLIENT_URL, 'https://localhost:3000'],
+    origin: '*',
   },
 });
 io.on('connection', (socket) => {
