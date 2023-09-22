@@ -18,7 +18,14 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 // MongoDB connection
 connectDB();
-app.use(cors());
+const corsOptions = {
+  origin: ['http://localhost:3000', process.env.CLIENT_URL],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type,Authorization',
+};
+
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // user related routes
@@ -42,7 +49,7 @@ const server = app.listen(PORT, () => {
 export const io = new Server.Server(server, {
   pingTimeout: 60000, //after 60 secs it will close the connection
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: [process.env.CLIENT_URL, 'https://localhost:3000'],
   },
 });
 io.on('connection', (socket) => {
