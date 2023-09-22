@@ -19,16 +19,12 @@ const PORT = process.env.PORT || 8000;
 // MongoDB connection
 connectDB();
 const corsOptions = {
-  origin: ['http://localhost:3000', process.env.CLIENT_URL],
+  origin: 'https://www.advantagecommunity.in',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   allowedHeaders: 'Content-Type,Authorization',
 };
 
-// app.use(
-//   cors({
-//     origin: '*',
-//   })
-// );
+app.use(cors(corsOptions));
 // app.use(
 //   cors({
 //     origin: 'http://localhost:3000',
