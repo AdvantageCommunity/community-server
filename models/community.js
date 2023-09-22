@@ -22,6 +22,26 @@ const communitySchema = new mongoose.Schema(
     description: {
       type: String,
     },
+    socials: [
+      {
+        type: String,
+      },
+    ],
+    lead: {
+      name: {
+        type: String,
+        required: true,
+      },
+      countryCode: {
+        type: Number,
+        default: 91,
+      },
+      phoneNumber: {
+        type: String,
+        required: true,
+        minlength: 10,
+      },
+    },
     tags: [
       {
         type: String,

@@ -67,7 +67,9 @@ export const verifyEmailLink = async (req, res) => {
     return res.status(400).json({ message: 'Provide username id.' });
   if (!token) return res.status(400).json({ message: 'Provide Token.' });
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }).select(
+      'verified _id email username profilePhoto'
+    );
     if (!user) return res.status(404).json({ message: 'User not found.' });
     const tokenExists = await Token.findOne({ user: user._id, token });
     if (!tokenExists)
@@ -75,7 +77,7 @@ export const verifyEmailLink = async (req, res) => {
     user.verified = true;
     await user.save();
     await Token.deleteOne({ _id: tokenExists._id });
-    res.status(200).json({ message: 'Email Verified Successfullyy!' });
+    res.status(200).json({ message: 'Email Verified Successfullyy!', user });
   } catch (error) {
     console.log('error in verifyEmailLink api : ' + error);
     return res.status(500).json({ message: error.message });
@@ -83,6 +85,7 @@ export const verifyEmailLink = async (req, res) => {
 };
 export const loginUser = async (req, res) => {
   const { identifier, password } = req.body;
+
   if (!password || password.length < 8)
     return res.status(400).json({ message: 'Provide Valid Password!' });
   if (!identifier)
@@ -154,6 +157,9 @@ export const loginUser = async (req, res) => {
         username: userExist.username,
         userId: userExist._id,
         email: userExist.email,
+        firstName: userExist.firstName,
+        lastName: userExist.lastName,
+        phoneNumber: userExist.phone,
       },
     });
   } catch (error) {
