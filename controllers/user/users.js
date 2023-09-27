@@ -55,7 +55,7 @@ export const registerUser = async (req, res) => {
     const url = `${process.env.CLIENT_URL}/users/${newUser.username}/verify/${token.token}`;
     await sendMail(newUser.email, 'Verify Your Email!', url);
     return res.status(201).json({
-      message: 'An Email has been sent to your Email. Please Verify!',
+      message: `An Email has been sent to your ${newUser.email}. Please Verify!`,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -71,6 +71,9 @@ export const verifyEmailLink = async (req, res) => {
       'verified _id email username profilePhoto'
     );
     if (!user) return res.status(404).json({ message: 'User not found.' });
+    if (user.verified)
+      return res.status(400).json({ message: 'User already verified!' });
+
     const tokenExists = await Token.findOne({ user: user._id, token });
     if (!tokenExists)
       return res.status(400).json({ message: 'Invalid Token.' });
@@ -122,12 +125,12 @@ export const loginUser = async (req, res) => {
         const url = `${process.env.CLIENT_URL}/users/${userExist.username}/verify/${token.token}`;
         await sendMail(userExist.email, 'Verify Your Email!', url);
         return res.status(201).json({
-          message: 'An Email has been sent to your Email. Please Verify!',
+          message: `An Email has been sent to your ${userExist.email}. Please Verify!`,
         });
       } else {
         if (isTokenExpired(token)) {
           await Token.deleteOne({ _id: token._id });
-          token = new Token({
+          const token = new Token({
             user: userExist._id,
             token: crypto.randomBytes(32).toString('hex'),
           });
@@ -157,9 +160,7 @@ export const loginUser = async (req, res) => {
         username: userExist.username,
         userId: userExist._id,
         email: userExist.email,
-        firstName: userExist.firstName,
-        lastName: userExist.lastName,
-        phoneNumber: userExist.phone,
+        verified: userExist.verified,
       },
     });
   } catch (error) {
