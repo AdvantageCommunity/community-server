@@ -80,7 +80,14 @@ export const verifyEmailLink = async (req, res) => {
     user.verified = true;
     await user.save();
     await Token.deleteOne({ _id: tokenExists._id });
-    res.status(200).json({ message: 'Email Verified Successfullyy!', user });
+    const accessToken = await user.generateAuthToken();
+    res.cookie('userAccessToken', accessToken, {
+      httpOnly: true,
+      maxAge: 20 * 24 * 60 * 60 * 1000,
+    });
+    res
+      .status(200)
+      .json({ message: 'Email Verified Successfullyy!', user, accessToken });
   } catch (error) {
     console.log('error in verifyEmailLink api : ' + error);
     return res.status(500).json({ message: error.message });
@@ -100,16 +107,16 @@ export const loginUser = async (req, res) => {
     const isEmail = validateEmail(identifier);
     if (isEmail) {
       userExist = await User.findOne({ email: identifier }).select(
-        'username email _id password verified'
+        'username email _id password verified isFirstLogin'
       );
     } else {
       userExist = await User.findOne({ username: identifier }).select(
-        'username email _id password verified'
+        'username email _id password verified isFirstLogin'
       );
     }
     if (!userExist) return res.status(404).json({ message: 'User Not Found!' });
 
-    const validPassword = await bcrypt.compare(password, userExist.password);
+    const validPassword = bcrypt.compare(password, userExist.password);
     if (!validPassword)
       return res.status(401).json({ message: 'Incorrect Password!' });
 
@@ -148,6 +155,10 @@ export const loginUser = async (req, res) => {
         });
       }
     }
+    if (userExist.isFirstLogin) {
+      userExist.isFirstLogin = false;
+      await userExist.save();
+    }
     const accessToken = await userExist.generateAuthToken();
     res.cookie('userAccessToken', accessToken, {
       httpOnly: true,
@@ -156,6 +167,7 @@ export const loginUser = async (req, res) => {
     res.status(201).json({
       message: 'Login Sucessfull',
       accessToken: accessToken,
+      isFirstLogin: userExist.isFirstLogin,
       user: {
         username: userExist.username,
         userId: userExist._id,
@@ -244,17 +256,24 @@ export const googleAuth = async (req, res) => {
     if (!email_verified)
       return res.status(400).json({ message: 'Email Not Verfied!' });
     const userExists = await User.findOne({ email }).select(
-      '_id email username'
+      '_id email username isFirstLogin'
     );
     if (userExists) {
+      if (userExists.isFirstLogin) {
+        userExists.isFirstLogin = false;
+        await userExists.save();
+      }
+      console.log(userExists.isFirstLogin);
       res.cookie('userAcessToken', tokenId, {
         httpOnly: true,
         maxAge: 20 * 24 * 60 * 60 * 1000,
       });
+      console.log(userExists.isFirstLogin);
       res.status(200).json({
         message: 'Login Successful!',
         token: tokenId,
         user: userExists,
+        isFirstLogin: userExists.isFirstLogin,
       });
     } else {
       const password = email + Date.now().toString();
@@ -264,6 +283,8 @@ export const googleAuth = async (req, res) => {
         email,
         password,
         username,
+        verified: true,
+        isFirstLogin: true,
       });
       await newUser.save();
       res.cookie('userAcessToken', tokenId, {
@@ -274,6 +295,7 @@ export const googleAuth = async (req, res) => {
         message: 'Registration Successful!',
         token: tokenId,
         user: userExists,
+        isFirstLogin: newUser.isFirstLogin,
       });
     }
   } catch (error) {
