@@ -22,6 +22,9 @@ export const getUserById = async (req, res) => {
   if (!userId) return res.status(400).json({ message: 'Provide User ID!' });
   try {
     const user = await User.findOne({ _id: userId })
+      .select(
+        'firstName username lastName profilePhoto phone.phoneNumber dateOfBirth gender bio'
+      )
       .populate({
         path: 'communities.community',
         model: 'Community',

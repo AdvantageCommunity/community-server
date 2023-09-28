@@ -12,6 +12,7 @@ import {
   getUserFollowers,
   verifyEmailLink,
   userFavorites,
+  validUser,
 } from '../../controllers/user/users.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
 import { upload } from '../../connections/aws.js';
@@ -28,6 +29,7 @@ router.patch(
   isUserAuthenticated,
   updateUser
 );
+router.get('/auth/valid', isUserAuthenticated, validUser);
 router.get('/profile/me', isUserAuthenticated, getActiveUserInfo);
 router.get('/:userId/followings', isUserAuthenticated, getUserFollowings);
 router.get('/:userId/followers', isUserAuthenticated, getUserFollowers);
@@ -36,5 +38,5 @@ router.patch('/:userId/follow', isUserAuthenticated, followUser);
 router.post('/:userId/follow', isUserAuthenticated, followUser);
 router.delete('/:userId/unfollow', isUserAuthenticated, unFollowUser);
 router.post('/event/:eventId/favorite', isUserAuthenticated, favoriteEvent);
-router.get('/me/favorites', isUserAuthenticated,userFavorites);
+router.get('/me/favorites', isUserAuthenticated, userFavorites);
 export default router;

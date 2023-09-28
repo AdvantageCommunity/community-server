@@ -95,7 +95,6 @@ export const verifyEmailLink = async (req, res) => {
 };
 export const loginUser = async (req, res) => {
   const { identifier, password } = req.body;
-
   if (!password || password.length < 8)
     return res.status(400).json({ message: 'Provide Valid Password!' });
   if (!identifier)
@@ -170,7 +169,7 @@ export const loginUser = async (req, res) => {
       isFirstLogin: userExist.isFirstLogin,
       user: {
         username: userExist.username,
-        userId: userExist._id,
+        _id: userExist._id,
         email: userExist.email,
         verified: userExist.verified,
       },
@@ -185,10 +184,10 @@ export const updateUser = async (req, res) => {
   const userId = req.rootUser?._id;
   if (!userId) return res.status(401).json({ message: 'User Not Authorized!' });
   const updates = req.body;
+
   let profilePhoto = req.file;
+
   const allowedUpdates = [
-    'profilePhoto',
-    'username',
     'firstName',
     'lastName',
     'countryCode',
@@ -196,13 +195,21 @@ export const updateUser = async (req, res) => {
     'gender',
     'bio',
     'interests',
+    'dateOfBirth',
   ];
   let profilePhotoResult;
   const requestedUpdates = Object.keys(updates);
+
   if (requestedUpdates.length <= 0)
     return res
       .status(400)
       .json({ message: 'Provide atleast one value to update.' });
+  const isValidUpdate = requestedUpdates.every((update) =>
+    allowedUpdates.includes(update)
+  );
+
+  if (!isValidUpdate)
+    return res.status(400).json({ message: 'Provide Valid Updates!' });
   if (profilePhoto) {
     const format = profilePhoto.originalname.split('.').pop().toLowerCase();
 
@@ -216,11 +223,6 @@ export const updateUser = async (req, res) => {
       `profile/${Date.now().toString()}.${format}`
     );
   }
-  const isValidUpdate = requestedUpdates.every((update) =>
-    allowedUpdates.includes(update)
-  );
-  if (!isValidUpdate)
-    return res.status(400).json({ message: 'Provide Valid Updates!' });
   try {
     if (requestedUpdates.includes('username')) {
       const usernameExits = await User.findOne({ username: req.body.username });
@@ -232,13 +234,20 @@ export const updateUser = async (req, res) => {
     }
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { ...updates, profilePhoto: profilePhotoResult?.Location },
+      {
+        ...updates,
+        phone: {
+          phoneNumber: req.body.phoneNumber,
+        },
+        profilePhoto: profilePhotoResult?.Location,
+      },
       {
         new: true, // This option returns the updated user document
         runValidators: true, // This option runs the validators defined in the userSchema for the updates
       }
     );
-    if (updatedUser) return res.status(201).json({ message: 'User Updated!' });
+    if (updatedUser)
+      res.status(200).json({ success: true, message: 'User Updated!' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -263,12 +272,10 @@ export const googleAuth = async (req, res) => {
         userExists.isFirstLogin = false;
         await userExists.save();
       }
-      console.log(userExists.isFirstLogin);
       res.cookie('userAcessToken', tokenId, {
         httpOnly: true,
         maxAge: 20 * 24 * 60 * 60 * 1000,
       });
-      console.log(userExists.isFirstLogin);
       res.status(200).json({
         message: 'Login Successful!',
         token: tokenId,
@@ -300,6 +307,22 @@ export const googleAuth = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const validUser = async (req, res) => {
+  try {
+    const validuser = await User.findOne({ _id: req.rootUser._id }).select(
+      'username email _id'
+    );
+    if (!validuser) res.json({ message: 'User is not valid' });
+    res.status(201).json({
+      user: validuser,
+      accessToken: req.accessToken,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    console.log(error);
   }
 };
 export const getActiveUserInfo = async (req, res) => {
