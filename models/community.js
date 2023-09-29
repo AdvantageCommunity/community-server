@@ -13,6 +13,8 @@ const communitySchema = new mongoose.Schema(
     },
     logo: {
       type: String,
+      default:
+        'https://m.media-amazon.com/images/M/MV5BNDQ5NDZiYjktZmFmMy00MjAxLTk1MDktOGZjYTY5YTE1ODdmXkEyXkFqcGdeQXVyNjcwMzEzMTU@._V1_.jpg',
     },
     coverImage: {
       type: String,
@@ -30,7 +32,7 @@ const communitySchema = new mongoose.Schema(
     lead: {
       name: {
         type: String,
-        required: true,
+        // required: true,
       },
       countryCode: {
         type: Number,
@@ -38,7 +40,7 @@ const communitySchema = new mongoose.Schema(
       },
       phoneNumber: {
         type: String,
-        required: true,
+        // required: true,
         minlength: 10,
       },
     },

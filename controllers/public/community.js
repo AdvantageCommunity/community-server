@@ -3,7 +3,7 @@ import Event from '../../models/event.js';
 export const allCommunities = async (req, res) => {
   try {
     const communities = await Community.find({
-      status: 'active',
+      // status: 'active',
     }).sort({ createdAt: -1 });
     res.status(200).json({ communities });
   } catch (error) {
@@ -29,14 +29,16 @@ export const communitybyId = async (req, res) => {
 };
 export const searchCommunity = async (req, res) => {
   const { search } = req.query;
+
   try {
     const communities = await Community.find({
-      status: 'active',
+      // status: 'active',
       $or: [
         { name: { $regex: new RegExp(search, 'i') } },
         { tags: { $in: [new RegExp(search, 'i')] } },
       ],
     }).sort({ createdAt: -1 });
+
     res.status(200).json({ communities });
   } catch (error) {
     console.log('Error in seach communities api : ' + error);

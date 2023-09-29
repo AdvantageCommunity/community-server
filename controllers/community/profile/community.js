@@ -1,4 +1,5 @@
 import { uploadToS3 } from '../../../connections/aws.js';
+import { io } from '../../../index.js';
 import Community from '../../../models/community.js';
 import User from '../../../models/users.js';
 import { isValidContacts } from '../../../utils/validations.js';
@@ -342,7 +343,7 @@ export const joinCommunity = async (req, res) => {
   try {
     const community = await Community.findOne({
       _id: communityId,
-      status: 'active',
+      // status: 'active',
     }).populate('admins');
     if (!community)
       return res.status(404).json({ message: 'Community not found.' });
@@ -369,9 +370,10 @@ export const joinCommunity = async (req, res) => {
       await admin.save();
       io.to(admin._id).emit('notification', notification);
     });
-    res
-      .status(200)
-      .json({ message: 'User has joined the community successfully.' });
+    res.status(200).json({
+      message: 'User has joined the community successfully.',
+      success: true,
+    });
   } catch (error) {
     console.error('Error in joinCommunity API:', error);
     res.status(500).json({ message: error.message });

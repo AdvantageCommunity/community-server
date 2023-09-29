@@ -21,7 +21,7 @@ export const getUserById = async (req, res) => {
   const { userId } = req.params;
   if (!userId) return res.status(400).json({ message: 'Provide User ID!' });
   try {
-    const user = await User.findOne({ _id: userId })
+    let user = await User.findOne({ _id: userId })
       .select(
         'firstName username lastName profilePhoto phone.phoneNumber dateOfBirth gender bio'
       )
@@ -31,8 +31,14 @@ export const getUserById = async (req, res) => {
         select: 'name logo description tags admins',
       })
       .select('-password');
+
+    const userDetails = {
+      ...user._doc, // Copy all properties from user._doc
+      phoneNumber: user.phone.phoneNumber, // Add phoneNumber property
+    };
+    delete userDetails.phone;
     if (!user) return res.status(404).json({ message: 'No user found!' });
-    return res.status(200).json({ user });
+    return res.status(200).json({ user: userDetails });
   } catch (error) {
     res
       .status(500)

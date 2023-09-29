@@ -313,7 +313,7 @@ export const googleAuth = async (req, res) => {
 export const validUser = async (req, res) => {
   try {
     const validuser = await User.findOne({ _id: req.rootUser._id }).select(
-      'username email _id'
+      'username email _id interests email profilePhoto'
     );
     if (!validuser) res.json({ message: 'User is not valid' });
     res.status(201).json({
