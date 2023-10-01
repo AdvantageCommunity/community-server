@@ -24,6 +24,9 @@ const blogSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Community', // Reference to the Community model for community authors
     },
+    read: {
+      type: String,
+    },
     tags: [{ type: String, trim: true }],
     coverImage: String, // URL to a cover image for the blog post
     likes: [

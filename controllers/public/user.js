@@ -53,9 +53,13 @@ export const searchUsers = async (req, res) => {
   }
   try {
     const users = await User.find({
-      $or: [
-        { username: { $regex: new RegExp(search, 'i') } }, // Case-insensitive username search
-        { email: { $regex: new RegExp(search, 'i') } }, // Case-insensitive email search
+      $and: [
+        {
+          $or: [
+            { username: { $regex: new RegExp(search, 'i') } }, // Case-insensitive username search
+            { email: { $regex: new RegExp(search, 'i') } }, // Case-insensitive email search
+          ],
+        },
       ],
     })
       .select('-password')

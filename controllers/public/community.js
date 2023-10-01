@@ -1,5 +1,6 @@
 import Community from '../../models/community.js';
 import Event from '../../models/event.js';
+import { featuredEventsData } from '../../utils/index.js';
 export const allCommunities = async (req, res) => {
   try {
     const communities = await Community.find({
@@ -86,7 +87,10 @@ export const eventBySlug = async (req, res) => {
   if (!slug) res.status(404).json({ message: 'Provide event slug.' });
 
   try {
-    const event = await Event.findOne({ slug }).populate('organizer');
+    const event = await Event.findOne({ slug }).populate(
+      'organizer',
+      'logo name _id'
+    );
     return res.status(200).json({ event });
   } catch (error) {
     console.error('Error in eventById API:', error);
@@ -95,8 +99,8 @@ export const eventBySlug = async (req, res) => {
   }
 };
 export const searchEvent = async (req, res) => {
-  let { title, startDate, endDate, venue, eventType, tags } = req.query;
-
+  let { title, startDate, endDate, venue, location, eventType, tags, search } =
+    req.query;
   const query = {};
 
   try {
@@ -115,10 +119,25 @@ export const searchEvent = async (req, res) => {
     }
     if (tags) {
       tags = Array.isArray(tags) ? tags : tags.split(',');
-      const tagRegexArray = tags.map((tag) => new RegExp(tag, 'i'));
+      const tagRegexArray = tags.map((tag) => new RegExp(tag.toString(), 'i'));
       query.tags = { $in: tagRegexArray };
     }
+    if (location) {
+      query.location.city = { $regex: new RegExp(location, 'i') };
+      query.location.state = { $regex: new RegExp(location, 'i') };
+      query.location.country = { $regex: new RegExp(location, 'i') };
+    }
+    if (search) {
+      const events = await Event.find({
+        $or: [
+          { title: { $regex: new RegExp(search, 'i') } }, // Case-insensitive username search
+          { venue: { $regex: new RegExp(search, 'i') } }, // Case-insensitive email search
+          { eventType: { $regex: new RegExp(search, 'i') } }, // Case-insensitive email search
+        ],
+      });
 
+      return res.status(200).json({ events });
+    }
     const events = await Event.find(query).exec();
 
     res.status(200).json({ events });
@@ -147,4 +166,7 @@ export const pastEvents = async (req, res) => {
     console.error('Error in pastEvents API:', error);
     return res.status(500).json({ error: 'Server error' });
   }
+};
+export const featuredEvents = async (req, res) => {
+  return res.status(200).json({ events: featuredEventsData });
 };

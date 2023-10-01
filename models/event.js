@@ -15,6 +15,17 @@ const eventSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    location: {
+      city: {
+        type: String,
+      },
+      state: {
+        type: String,
+      },
+      country: {
+        type: String,
+      },
+    },
     eventType: {
       type: String,
       enum: ['online', 'offline'],

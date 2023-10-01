@@ -35,7 +35,6 @@ router.get('/:userId/followings', isUserAuthenticated, getUserFollowings);
 router.get('/:userId/followers', isUserAuthenticated, getUserFollowers);
 router.post('/auth/me/logout', isUserAuthenticated, logoutUser);
 router.patch('/:userId/follow', isUserAuthenticated, followUser);
-router.post('/:userId/follow', isUserAuthenticated, followUser);
 router.delete('/:userId/unfollow', isUserAuthenticated, unFollowUser);
 router.post('/event/:eventId/favorite', isUserAuthenticated, favoriteEvent);
 router.get('/me/favorites', isUserAuthenticated, userFavorites);

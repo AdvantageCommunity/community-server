@@ -312,12 +312,32 @@ export const googleAuth = async (req, res) => {
 
 export const validUser = async (req, res) => {
   try {
-    const validuser = await User.findOne({ _id: req.rootUser._id }).select(
-      'username email _id interests email profilePhoto'
-    );
-    if (!validuser) res.json({ message: 'User is not valid' });
+    let validUser = await User.findOne({ _id: req.rootUser._id })
+
+      .populate({
+        path: 'favorites.blogs',
+        model: 'Blog',
+        select: 'title author content coverImage createdAt slug read',
+        populate: {
+          path: 'author', // Specify the path to the author field in the Blog model
+          model: 'User', // Assuming 'User' is the model for authors
+          select: 'username profilePhoto', // Select the fields you want from the author
+        },
+      })
+      .populate({
+        path: 'favorites.events',
+        model: 'Event',
+        select: 'title organizer description imageUrl',
+      });
+
+    validUser.favorites.blogs.forEach((blog) => {
+      if (blog && blog.content && blog.content.length > 80) {
+        blog.content = blog.content.slice(0, 150);
+      }
+    });
+    if (!validUser) res.json({ message: 'User is not valid' });
     res.status(201).json({
-      user: validuser,
+      user: validUser,
       accessToken: req.accessToken,
     });
   } catch (error) {
@@ -375,7 +395,12 @@ export const followUser = async (req, res) => {
       await userToFollow.save();
       io.to(userToFollow._id).emit('notification', notification);
 
-      res.status(200).json({ message: 'User followed successfully' });
+      res
+        .status(200)
+        .json({
+          success: 'User followed successfully',
+          followings: req.rootUser.followings,
+        });
     } else {
       res.status(400).json({ message: 'You already follow this user.' });
     }
@@ -404,7 +429,10 @@ export const unFollowUser = async (req, res) => {
       await req.rootUser.save();
       await userToUnfollow.save();
 
-      res.status(200).json({ message: 'User unfollowed successfully' });
+      res.status(200).json({
+        success: 'User unfollowed successfully',
+        followings: req.rootUser.followings,
+      });
     } else {
       res.status(400).json({ message: 'Your not following this user' });
     }

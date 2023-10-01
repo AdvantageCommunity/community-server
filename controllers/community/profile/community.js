@@ -371,8 +371,7 @@ export const joinCommunity = async (req, res) => {
       io.to(admin._id).emit('notification', notification);
     });
     res.status(200).json({
-      message: 'User has joined the community successfully.',
-      success: true,
+      success: 'User has joined the community successfully.',
     });
   } catch (error) {
     console.error('Error in joinCommunity API:', error);
@@ -386,7 +385,7 @@ export const leaveCommunity = async (req, res) => {
   try {
     const community = await Community.findOne({
       _id: communityId,
-      status: 'active',
+      // status: 'active',
     }).populate('admins');
     if (!community)
       return res.status(404).json({ message: 'Community not found.' });
@@ -415,7 +414,7 @@ export const leaveCommunity = async (req, res) => {
     });
     return res
       .status(200)
-      .json({ message: 'User has left the community successfully.' });
+      .json({ success: 'User has left the community successfully.' });
   } catch (error) {
     console.error('Error in leaveCommunity API:', error);
     res.status(500).json({ message: error.message });

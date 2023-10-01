@@ -155,9 +155,11 @@ export const likeABlog = async (req, res) => {
           io.to(recipient._id).emit('notification', notification);
         }
       }
-      return res
-        .status(400)
-        .json({ message: 'Blog liked successfully', likes: blogToLike.likes });
+      return res.status(200).json({
+        message: 'Blog liked successfully',
+        likes: blogToLike.likes,
+        success: true.json,
+      });
     } else {
       return res
         .status(400)
@@ -170,13 +172,11 @@ export const likeABlog = async (req, res) => {
 export const unLikeABlog = async (req, res) => {
   const { blogId } = req.params;
   const userId = req.rootUser._id;
-  console.log(userId);
 
   if (!blogId) return res.status(400).json({ message: 'Provide blog id.' });
 
   try {
     const blogToUnLike = await Blog.findOne({ _id: blogId });
-    console.log(blogToUnLike.likes);
 
     if (!blogToUnLike)
       return res.status(404).json({ message: 'Blog not found.' });
@@ -197,6 +197,7 @@ export const unLikeABlog = async (req, res) => {
       return res.status(200).json({
         message: 'Blog unliked successfully',
         likes: blogToUnLike.likes,
+        success: true,
       });
     } else {
       return res.status(400).json({ message: 'You have not liked this blog' });
@@ -208,6 +209,7 @@ export const unLikeABlog = async (req, res) => {
 export const commentOnBlog = async (req, res) => {
   const { blogId } = req.params;
   const { content } = req.body;
+  console.log(req.body);
   if (!blogId) return res.status(400).json({ message: 'Provide blog id' });
   if (!content) return res.status(400).json({ message: 'Provide content' });
 
@@ -253,7 +255,7 @@ export const commentOnBlog = async (req, res) => {
         io.to(recipient._id).emit('notification', notification);
       }
     }
-    res.status(201).json({ message: 'Comment Added!', comment: savedComment });
+    res.status(201).json({ success: 'Comment Added!', comment: savedComment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -277,7 +279,6 @@ export const deleteComment = async (req, res) => {
       );
       const selectedComment = blog.comments[commentIdex];
       if (selectedComment.user.toString() === req.rootUser._id.toString()) {
-        console.log(commentIdex);
         if (commentIdex === -1)
           return res.status(404).json({ message: 'Comment not found' });
         blog.comments.splice(commentIdex, 1);
@@ -309,7 +310,34 @@ export const favoriteBlog = async (req, res) => {
     }
     req.rootUser.favorites.blogs.push(blogExists._id);
     await req.rootUser.save();
-    res.status(200).json({ message: 'Blog Added to Favorites.' });
+    res.status(200).json({ succcess: 'Blog Added to Favorites.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const unFavoriteBlog = async (req, res) => {
+  const { blogId } = req.params;
+
+  try {
+    if (!blogId) {
+      return res.status(400).json({ message: 'Provide a valid blog id' });
+    }
+    const blogExists = await Blog.findOne({ _id: blogId });
+    if (!blogExists) {
+      return res.status(404).json({ message: 'Blog not found.' });
+    }
+    const user = req.rootUser;
+    const favoriteIndex = user.favorites.blogs.indexOf(blogExists._id);
+    if (favoriteIndex === -1) {
+      return res
+        .status(400)
+        .json({ message: 'Blog is not in your favorites.' });
+    }
+
+    user.favorites.blogs.splice(favoriteIndex, 1);
+    await user.save();
+
+    res.status(200).json({ success: 'Blog removed from favorites.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
