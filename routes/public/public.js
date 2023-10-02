@@ -10,11 +10,13 @@ import {
   getBlogBySlug,
   getPopularBlogCategories,
   searchBlogs,
+  getCommunitiyBlogs,
+  getCommunitiyEvents,
 } from '../../controllers/public/blog.js';
 import {
   allCommunities,
   allEvents,
-  communitybyId,
+  communityBySlug,
   eventBySlug,
   featuredEvents,
   getPopularCommunityTags,
@@ -38,13 +40,16 @@ router.get('/blogs', searchBlogs);
 // Community Related
 router.get('/community/popular-tags', getPopularCommunityTags);
 router.get('/community/all', allCommunities);
-router.get('/community/:communityId', communitybyId);
+router.get('/community/:slug', communityBySlug);
 router.get('/communities', searchCommunity);
 // Community Blog
 router.get('/community/blog/all', allCommunitiesBlogs);
+router.get('/community/:slug/blogs', getCommunitiyBlogs);
+
 // Community Events
 router.get('/community/event/all', allEvents);
 router.get('/community/event/:slug', eventBySlug);
+router.get('/community/:slug/events', getCommunitiyEvents);
 router.get('/community/event/all/upcoming', upcommingEvents);
 router.get('/community/event/all/past', pastEvents);
 router.get('/community/event/all/featured', featuredEvents);

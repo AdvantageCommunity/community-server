@@ -29,6 +29,12 @@ const communitySchema = new mongoose.Schema(
         type: String,
       },
     ],
+    slug: {
+      type: String,
+      required: true,
+      trim: true,
+      unique: true,
+    },
     lead: {
       name: {
         type: String,

@@ -13,14 +13,36 @@ export const allCommunities = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-export const communitybyId = async (req, res) => {
-  const { communityId } = req.params;
-  if (!communityId) res.status(404).json({ message: 'Provide community id.' });
+export const communityBySlug = async (req, res) => {
+  const { slug } = req.params;
+  if (!slug) res.status(404).json({ message: 'Provide community id.' });
   try {
     const community = await Community.findOne({
-      _id: communityId,
-      status: 'active',
-    });
+      slug,
+      // status: 'active',
+    })
+      .populate({
+        path: 'blogs',
+        model: 'Blog',
+        select: 'title content coverImage createdAt read slug tags author',
+        populate: {
+          path: 'author',
+          model: 'User',
+          select: 'profilePhoto username',
+        },
+      })
+      .populate({
+        path: 'events',
+        model: 'Event',
+        select: 'title description imageUrl date organizer',
+        populate: {
+          path: 'organizer',
+          model: 'Community',
+          select: 'name logo',
+        },
+      })
+      .populate('admins', 'username profilePhoto email');
+
     res.status(200).json({ community });
   } catch (error) {
     console.log('Error in community by id api : ' + error);

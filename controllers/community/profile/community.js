@@ -18,6 +18,7 @@ export const registerCommunity = async (req, res) => {
   if (!description)
     return res.status(400).json({ message: 'Provide community description.' });
   contacts = Array.isArray(contacts) ? tags : JSON.parse(contacts || '[]');
+  const slug = slugify(name, { lower: true });
   const validContacts = isValidContacts(contacts);
   if (!validContacts)
     return res.status(400).json({ message: 'Invalid Contacts.' });
@@ -47,6 +48,7 @@ export const registerCommunity = async (req, res) => {
       admins: [req.rootUser._id],
       tags,
       members: [req.rootUser._id],
+      slug,
     });
     await community.save();
     req.rootUser.communities.push({
@@ -338,6 +340,7 @@ export const viewCommunityMembers = async (req, res) => {
 };
 export const joinCommunity = async (req, res) => {
   const { communityId } = req.params;
+
   if (!communityId)
     return res.status(400).json({ message: 'Provide community id.' });
   try {

@@ -1,4 +1,6 @@
 import Blog from '../../models/blog.js';
+import Community from '../../models/community.js';
+import Event from '../../models/event.js';
 
 export const getAllBlogs = async (req, res) => {
   try {
@@ -85,4 +87,41 @@ export const allCommunitiesBlogs = async (req, res) => {
     return res.status(500).json({ error: 'Server error' });
   }
 };
-export const communityBlogs = async (req, res) => {};
+export const getCommunitiyBlogs = async (req, res) => {
+  const { slug } = req.params;
+  if (!slug) {
+    return res.status(400).json({ message: 'Provide Community!' });
+  }
+
+  try {
+    const communityExists = await Community.findOne({ slug });
+    if (!communityExists)
+      return res.status(404).json({ message: 'Community not found.' });
+
+    const blogs = await Blog.find({
+      communityAuthor: communityExists._id,
+    });
+    res.status(200).json({ blogs });
+  } catch (error) {
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+export const getCommunitiyEvents = async (req, res) => {
+  const { slug } = req.params;
+  if (!slug) {
+    return res.status(400).json({ message: 'Provide Community!' });
+  }
+
+  try {
+    const communityExists = await Community.findOne({ slug: slug });
+    if (!communityExists)
+      return res.status(404).json({ message: 'Community not found.' });
+
+    const events = await Event.find({
+      organizer: communityExists._id,
+    });
+    res.status(200).json({ events });
+  } catch (error) {
+    return res.status(500).json({ error: 'Server error' });
+  }
+};

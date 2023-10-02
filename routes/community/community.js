@@ -13,6 +13,11 @@ import {
 import { upload } from '../../connections/aws.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
 const router = express.Router();
+
+// Join a community
+router.post('/:communityId/join', isUserAuthenticated, joinCommunity);
+// Leave a community
+router.post('/:communityId/leave', isUserAuthenticated, leaveCommunity);
 // view community members using community id
 router.get('/:communityId', isUserAuthenticated, viewCommunityMembers);
 // Register community
@@ -43,6 +48,7 @@ router.patch(
   isUserAuthenticated,
   updateCommunityDetails
 );
+router.get('/:communityId/admin', isUserAuthenticated, communityAdmins);
 // Add community admins from users
 router.post('/:communityId/admin', isUserAuthenticated, addCommunityAdmin);
 // removed existing community admin using there id
@@ -58,11 +64,6 @@ router.delete(
   removeCommunityMember
 );
 // Get all the admins of a community
-router.get('/:communityId/admin', isUserAuthenticated, communityAdmins);
-// Join a community
-router.post('/:communityId/join', isUserAuthenticated, joinCommunity);
-// Leave a community
-router.post('/:communityId/leave', isUserAuthenticated, leaveCommunity);
 // Events
 
 export default router;
