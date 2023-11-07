@@ -14,6 +14,7 @@ import crypto from 'crypto';
 import { io } from '../../index.js';
 export const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
+  console.log(req.body);
   if (!username)
     return res.status(400).json({ message: 'Username is Required!' });
   const isValidUsername = validUsername(username);
@@ -395,12 +396,10 @@ export const followUser = async (req, res) => {
       await userToFollow.save();
       io.to(userToFollow._id).emit('notification', notification);
 
-      res
-        .status(200)
-        .json({
-          success: 'User followed successfully',
-          followings: req.rootUser.followings,
-        });
+      res.status(200).json({
+        success: 'User followed successfully',
+        followings: req.rootUser.followings,
+      });
     } else {
       res.status(400).json({ message: 'You already follow this user.' });
     }

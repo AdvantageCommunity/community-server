@@ -1,11 +1,18 @@
+import { redis } from '../../connections/redis.js';
 import Community from '../../models/community.js';
 import Event from '../../models/event.js';
 import { featuredEventsData } from '../../utils/index.js';
 export const allCommunities = async (req, res) => {
   try {
+    const key = 'communities';
+    const cachedCommunties = await redis.get(key);
+    if (cachedCommunties)
+      return res.status(200).json({ blogs: JSON.parse(cachedCommunties) });
+
     const communities = await Community.find({
       // status: 'active',
     }).sort({ createdAt: -1 });
+    await redis.set(key, JSON.stringify(communities), 'EX', 3600);
     res.status(200).json({ communities });
   } catch (error) {
     console.log('Error in all communities api : ' + error);
@@ -71,6 +78,10 @@ export const searchCommunity = async (req, res) => {
 export const getPopularCommunityTags = async (req, res) => {
   try {
     // Aggregate and count the occurrence of each tag in the "tags" field of blogs
+    const key = 'tags';
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
+
     const popularTags = await Community.aggregate([
       { $unwind: '$tags' },
       {
@@ -82,7 +93,7 @@ export const getPopularCommunityTags = async (req, res) => {
 
     // Extract the tag names from the aggregation result
     const tagNames = popularTags.map((tag) => tag._id);
-
+    await redis.set(key, JSON.stringify(tagNames), 'EX', 3600);
     return res.status(200).json({ tags: tagNames });
   } catch (error) {
     console.error('Error in getPopularCommunityTags API:', error);
@@ -94,9 +105,14 @@ export const getPopularCommunityTags = async (req, res) => {
 
 export const allEvents = async (req, res) => {
   try {
+    const key = 'events';
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
     const events = await Event.find()
       .sort({ createdAt: -1 })
       .populate('organizer');
+    await redis.set(key, JSON.stringify(events), 'EX', 3600);
+
     res.status(200).json({ events });
   } catch (error) {
     console.error('Error in allEvents API:', error);
@@ -157,6 +173,7 @@ export const searchEvent = async (req, res) => {
           { eventType: { $regex: new RegExp(search, 'i') } }, // Case-insensitive email search
         ],
       });
+      await redis.set(key, JSON.stringify(events), 'EX', 3600);
 
       return res.status(200).json({ events });
     }
@@ -171,7 +188,12 @@ export const searchEvent = async (req, res) => {
 export const upcommingEvents = async (req, res) => {
   const currentDate = new Date();
   try {
+    const key = 'upcomingEvents';
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
     const events = await Event.find({ date: { $gt: currentDate } });
+    await redis.set(key, JSON.stringify(events), 'EX', 3600);
+
     res.status(200).json({ events });
   } catch (error) {
     console.error('Error in upcommingEvents API:', error);
@@ -182,7 +204,12 @@ export const upcommingEvents = async (req, res) => {
 export const pastEvents = async (req, res) => {
   const currentDate = new Date();
   try {
+    const key = 'pastEvents';
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
     const events = await Event.find({ date: { $lt: currentDate } });
+    await redis.set(key, JSON.stringify(events), 'EX', 3600);
+
     res.status(200).json({ events });
   } catch (error) {
     console.error('Error in pastEvents API:', error);

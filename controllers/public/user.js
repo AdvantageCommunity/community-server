@@ -1,7 +1,10 @@
+import { redis } from '../../connections/redis.js';
 import User from '../../models/users.js';
-
 export const getAllUsers = async (req, res) => {
   try {
+    const key = 'users';
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
     const users = await User.find()
       .populate({
         path: 'communities.community',
@@ -10,6 +13,8 @@ export const getAllUsers = async (req, res) => {
       })
       .select('-password')
       .sort({ createdAt: -1 }); // Retrieve all users from the database
+    await redis.set(key, JSON.stringify(users), 'EX', 3600);
+
     res.status(200).json({ users }); // Send the users as a JSON response
   } catch (error) {
     res
@@ -18,20 +23,24 @@ export const getAllUsers = async (req, res) => {
   }
 };
 export const getUserById = async (req, res) => {
-  const { userId } = req.params;
-  if (!userId) return res.status(400).json({ message: 'Provide User ID!' });
+  const { username } = req.params;
+  if (!username) return res.status(400).json({ message: 'Provide User ID!' });
   try {
-    let user = await User.findOne({ _id: userId })
+    let user = await User.findOne({ username })
       .select(
-        'firstName username lastName profilePhoto phone.phoneNumber dateOfBirth gender bio'
+        'firstName username lastName profilePhoto phone.phoneNumber dateOfBirth gender bio blogs'
       )
+      .populate({
+        path: 'blogs',
+        model: 'Blog',
+      })
       .populate({
         path: 'communities.community',
         model: 'Community',
         select: 'name logo description tags admins',
       })
       .select('-password');
-
+    console.log(user);
     const userDetails = {
       ...user._doc, // Copy all properties from user._doc
       phoneNumber: user.phone.phoneNumber, // Add phoneNumber property

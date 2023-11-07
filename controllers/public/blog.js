@@ -1,13 +1,19 @@
+import { redis } from '../../connections/redis.js';
 import Blog from '../../models/blog.js';
 import Community from '../../models/community.js';
 import Event from '../../models/event.js';
 
 export const getAllBlogs = async (req, res) => {
   try {
+    const key = 'blogs';
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.json({ blogs: JSON.parse(cacheData) });
     const blogs = await Blog.find()
       .populate('author', 'username profilePhoto')
       .populate('communityAuthor', 'name logo')
       .sort({ createdAt: -1 });
+
+    await redis.set(key, JSON.stringify(blogs), 'EX', 3600);
     res.status(200).json({ blogs }); // Send the users as a JSON response
   } catch (error) {
     res
@@ -23,7 +29,6 @@ export const getBlogBySlug = async (req, res) => {
       .populate('author', 'profilePhoto username')
       .populate('communityAuthor', 'logo name')
       .populate('comments.user', 'username profilePhoto');
-
     if (!blog) return res.status(404).json({ message: 'Blog not found.' });
     return res.status(200).json({ blog });
   } catch (error) {
@@ -76,12 +81,17 @@ export const getPopularBlogCategories = async (req, res) => {
 // Community Blogs
 export const allCommunitiesBlogs = async (req, res) => {
   try {
+    const key = 'community_blogs';
+    const cachedBlogs = await redis.get(key);
+    if (cachedBlogs)
+      return res.status(200).json({ blogs: JSON.parse(cachedBlogs) });
     const blogs = await Blog.find({
       communityAuthor: { $exists: true },
     })
       .populate('author', 'firstName lastname email profilePhoto')
       .populate('communityAuthor', 'name logo email')
       .sort({ createdAt: -1 });
+    await redis.set(key, JSON.stringify(blogs), 'EX', 3600);
     res.status(200).json({ blogs });
   } catch (error) {
     return res.status(500).json({ error: 'Server error' });

@@ -28,7 +28,7 @@ import {
 const router = express.Router();
 // User Related Routes
 router.get('/users/all', getAllUsers);
-router.get('/users/user/:userId', getUserById);
+router.get('/users/user/:username', getUserById);
 router.get('/users', searchUsers);
 
 // User Blogs Related Routes
