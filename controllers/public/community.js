@@ -7,7 +7,9 @@ export const allCommunities = async (req, res) => {
     const key = 'communities';
     const cachedCommunties = await redis.get(key);
     if (cachedCommunties)
-      return res.status(200).json({ blogs: JSON.parse(cachedCommunties) });
+      return res
+        .status(200)
+        .json({ communities: JSON.parse(cachedCommunties) });
 
     const communities = await Community.find({
       // status: 'active',
@@ -24,6 +26,10 @@ export const communityBySlug = async (req, res) => {
   const { slug } = req.params;
   if (!slug) res.status(404).json({ message: 'Provide community id.' });
   try {
+    const key = `community.${slug}`;
+    const cacheData = await redis.get(key);
+    if (cacheData)
+      return res.status(200).json({ community: JSON.parse(cacheData) });
     const community = await Community.findOne({
       slug,
       // status: 'active',
@@ -49,6 +55,7 @@ export const communityBySlug = async (req, res) => {
         },
       })
       .populate('admins', 'username profilePhoto email');
+    await redis.set(key, JSON.stringify(community), 'EX', 3600);
 
     res.status(200).json({ community });
   } catch (error) {
@@ -61,6 +68,10 @@ export const searchCommunity = async (req, res) => {
   const { search } = req.query;
 
   try {
+    const key = `community.search.${search}`;
+    const cacheData = await redis.get(key);
+    if (cacheData)
+      return res.status(200).json({ communities: JSON.parse(cacheData) });
     const communities = await Community.find({
       // status: 'active',
       $or: [
@@ -68,6 +79,7 @@ export const searchCommunity = async (req, res) => {
         { tags: { $in: [new RegExp(search, 'i')] } },
       ],
     }).sort({ createdAt: -1 });
+    await redis.set(key, JSON.stringify(communities), 'EX', 3600);
 
     res.status(200).json({ communities });
   } catch (error) {
@@ -78,9 +90,9 @@ export const searchCommunity = async (req, res) => {
 export const getPopularCommunityTags = async (req, res) => {
   try {
     // Aggregate and count the occurrence of each tag in the "tags" field of blogs
-    const key = 'tags';
+    const key = 'popularCommunityTags';
     const cacheData = await redis.get(key);
-    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
+    if (cacheData) return res.status(200).json({ tags: JSON.parse(cacheData) });
 
     const popularTags = await Community.aggregate([
       { $unwind: '$tags' },
@@ -107,7 +119,8 @@ export const allEvents = async (req, res) => {
   try {
     const key = 'events';
     const cacheData = await redis.get(key);
-    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
+    if (cacheData)
+      return res.status(200).json({ events: JSON.parse(cacheData) });
     const events = await Event.find()
       .sort({ createdAt: -1 })
       .populate('organizer');
@@ -125,10 +138,16 @@ export const eventBySlug = async (req, res) => {
   if (!slug) res.status(404).json({ message: 'Provide event slug.' });
 
   try {
+    const key = `event.${slug}`;
+    const cacheData = await redis.get(key);
+    if (cacheData)
+      return res.status(200).json({ event: JSON.parse(cacheData) });
     const event = await Event.findOne({ slug }).populate(
       'organizer',
       'logo name _id'
     );
+    await redis.set(key, JSON.stringify(event), 'EX', 3600);
+
     return res.status(200).json({ event });
   } catch (error) {
     console.error('Error in eventById API:', error);
@@ -137,15 +156,39 @@ export const eventBySlug = async (req, res) => {
   }
 };
 export const searchEvent = async (req, res) => {
-  let { title, startDate, endDate, venue, location, eventType, tags, search } =
-    req.query;
+  const {
+    title,
+    startDate,
+    endDate,
+    venue,
+    location,
+    eventType,
+    tags,
+    search,
+  } = req.query;
   const query = {};
 
   try {
-    if (title) {
-      query.title = { $regex: new RegExp(title, 'i') }; // Case-insensitive title search
+    let cacheKey = 'searchEvents:';
+    if (title) cacheKey += `title-${title}:`;
+    if (startDate) cacheKey += `startDate-${startDate}:`;
+    if (endDate) cacheKey += `endDate-${endDate}:`;
+    if (venue) cacheKey += `venue-${venue}:`;
+    if (eventType) cacheKey += `eventType-${eventType}:`;
+    if (tags) cacheKey += `tags-${tags}:`;
+    if (location) cacheKey += `location-${location}:`;
+
+    if (search) {
+      // If search is provided, use a separate cache key and return cached results if available
+      const cachedResults = await client.get(`searchEvents:search-${search}`);
+      if (cachedResults) {
+        return res.status(200).json({ events: JSON.parse(cachedResults) });
+      }
     }
 
+    if (title) {
+      query.title = { $regex: new RegExp(title, 'i') };
+    }
     if (startDate && endDate) {
       query.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
     }
@@ -161,23 +204,31 @@ export const searchEvent = async (req, res) => {
       query.tags = { $in: tagRegexArray };
     }
     if (location) {
-      query.location.city = { $regex: new RegExp(location, 'i') };
-      query.location.state = { $regex: new RegExp(location, 'i') };
-      query.location.country = { $regex: new RegExp(location, 'i') };
-    }
-    if (search) {
-      const events = await Event.find({
+      query.location = {
         $or: [
-          { title: { $regex: new RegExp(search, 'i') } }, // Case-insensitive username search
-          { venue: { $regex: new RegExp(search, 'i') } }, // Case-insensitive email search
-          { eventType: { $regex: new RegExp(search, 'i') } }, // Case-insensitive email search
+          { city: { $regex: new RegExp(location, 'i') } },
+          { state: { $regex: new RegExp(location, 'i') } },
+          { country: { $regex: new RegExp(location, 'i') } },
         ],
-      });
-      await redis.set(key, JSON.stringify(events), 'EX', 3600);
-
-      return res.status(200).json({ events });
+      };
     }
+
     const events = await Event.find(query).exec();
+
+    // Cache the results if not empty and if search parameter is not present
+    if (events.length > 0 && !search) {
+      await client.set(cacheKey, JSON.stringify(events), 'EX', 3600);
+    }
+
+    // Cache the results if search parameter is present
+    if (search) {
+      await client.set(
+        `searchEvents:search-${search}`,
+        JSON.stringify(events),
+        'EX',
+        3600
+      );
+    }
 
     res.status(200).json({ events });
   } catch (error) {

@@ -4,7 +4,8 @@ export const getAllUsers = async (req, res) => {
   try {
     const key = 'users';
     const cacheData = await redis.get(key);
-    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
+    if (cacheData)
+      return res.status(200).json({ users: JSON.parse(cacheData) });
     const users = await User.find()
       .populate({
         path: 'communities.community',
@@ -26,6 +27,9 @@ export const getUserById = async (req, res) => {
   const { username } = req.params;
   if (!username) return res.status(400).json({ message: 'Provide User ID!' });
   try {
+    const key = `user.${username}`;
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.status(200).json({ user: JSON.parse(cacheData) });
     let user = await User.findOne({ username })
       .select(
         'firstName username lastName profilePhoto phone.phoneNumber dateOfBirth gender bio blogs'
@@ -40,13 +44,16 @@ export const getUserById = async (req, res) => {
         select: 'name logo description tags admins',
       })
       .select('-password');
-    console.log(user);
+
     const userDetails = {
       ...user._doc, // Copy all properties from user._doc
       phoneNumber: user.phone.phoneNumber, // Add phoneNumber property
     };
     delete userDetails.phone;
-    if (!user) return res.status(404).json({ message: 'No user found!' });
+    if (!userDetails)
+      return res.status(404).json({ message: 'No user found!' });
+    await redis.set(key, JSON.stringify(userDetails), 'EX', 3600);
+
     return res.status(200).json({ user: userDetails });
   } catch (error) {
     res
@@ -61,6 +68,10 @@ export const searchUsers = async (req, res) => {
     return res.status(400).json({ message: 'Search parameter is required' });
   }
   try {
+    const key = `user.search.${search}`;
+    const cacheData = await redis.get(key);
+    if (cacheData)
+      return res.status(200).json({ users: JSON.parse(cacheData) });
     const users = await User.find({
       $and: [
         {
@@ -73,6 +84,8 @@ export const searchUsers = async (req, res) => {
     })
       .select('-password')
       .sort({ createdAt: -1 });
+    await redis.set(key, JSON.stringify(users), 'EX', 3600);
+
     return res.status(200).json({ users });
   } catch (error) {
     console.error('Error in searching users:', error);

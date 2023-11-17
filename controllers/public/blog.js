@@ -7,7 +7,8 @@ export const getAllBlogs = async (req, res) => {
   try {
     const key = 'blogs';
     const cacheData = await redis.get(key);
-    if (cacheData) return res.json({ blogs: JSON.parse(cacheData) });
+    if (cacheData)
+      return res.status(200).json({ blogs: JSON.parse(cacheData) });
     const blogs = await Blog.find()
       .populate('author', 'username profilePhoto')
       .populate('communityAuthor', 'name logo')
@@ -24,12 +25,18 @@ export const getAllBlogs = async (req, res) => {
 export const getBlogBySlug = async (req, res) => {
   const { slug } = req.params;
   if (!slug) return res.status(400).json({ message: 'Provide Blog Slug.' });
+
   try {
+    const key = `blog.${slug}`;
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.status(200).json({ blog: JSON.parse(cacheData) });
     const blog = await Blog.findOne({ slug })
       .populate('author', 'profilePhoto username')
       .populate('communityAuthor', 'logo name')
       .populate('comments.user', 'username profilePhoto');
     if (!blog) return res.status(404).json({ message: 'Blog not found.' });
+    await redis.set(key, JSON.stringify(blog), 'EX', 3600);
+
     return res.status(200).json({ blog });
   } catch (error) {
     res
@@ -43,6 +50,9 @@ export const searchBlogs = async (req, res) => {
   if (!search) {
     return res.status(400).json({ message: 'Search parameter is required' });
   }
+  const key = `blog.search.${search}`;
+  const cacheData = await redis.get(key);
+  if (cacheData) return res.status(200).json({ blogs: JSON.parse(cacheData) });
   try {
     const blogs = await Blog.find({
       $or: [
@@ -52,6 +62,8 @@ export const searchBlogs = async (req, res) => {
     })
       .populate('author', 'profilePhoto username')
       .sort({ createdAt: -1 });
+    await redis.set(key, JSON.stringify(blogs), 'EX', 3600);
+
     return res.status(200).json({ blogs });
   } catch (error) {
     console.error('Error in searching for blogs:', error);
@@ -61,6 +73,9 @@ export const searchBlogs = async (req, res) => {
 export const getPopularBlogCategories = async (req, res) => {
   try {
     // Aggregate and count the occurrence of each tag in the "tags" field of blogs
+    const key = 'popularBlogCategories';
+    const cacheData = await redis.get(key);
+    if (cacheData) return res.status(200).json({ tags: JSON.parse(cacheData) });
     const popularTags = await Blog.aggregate([
       { $unwind: '$tags' },
       {
@@ -72,6 +87,7 @@ export const getPopularBlogCategories = async (req, res) => {
 
     // Extract the tag names from the aggregation result
     const tagNames = popularTags.map((tag) => tag._id);
+    await redis.set(key, JSON.stringify(tags), 'EX', 3600);
     return res.status(200).json({ tags: tagNames });
   } catch (error) {
     console.error(error);
@@ -121,7 +137,10 @@ export const getCommunitiyEvents = async (req, res) => {
   if (!slug) {
     return res.status(400).json({ message: 'Provide Community!' });
   }
-
+  const key = 'community_blogs';
+  const cachedBlogs = await redis.get(key);
+  if (cachedBlogs)
+    return res.status(200).json({ blogs: JSON.parse(cachedBlogs) });
   try {
     const communityExists = await Community.findOne({ slug: slug });
     if (!communityExists)
