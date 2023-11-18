@@ -2,6 +2,7 @@ import Event from '../../../models/event.js';
 import slugify from 'slugify';
 import { uploadToS3 } from '../../../connections/aws.js';
 import { io } from '../../../index.js';
+import { redis } from '../../../connections/redis.js';
 
 export const postCommunityEvent = async (req, res) => {
   const {
@@ -63,6 +64,8 @@ export const postCommunityEvent = async (req, res) => {
       slug,
     });
     const savedEvent = await event.save();
+    const cacheKey = ['events', 'upcomingEvents'];
+    await redis.del(...cacheKey);
     let notification = {
       message: `${req.community.name} posted a new Event.`,
       actionType: 'event',
@@ -93,10 +96,10 @@ export const updateCommunityEvent = async (req, res) => {
   if (!slug) return res.status(400).json({ message: 'Provide event slug.' });
   const eventBanner = req.file;
   let eventBannerResult;
+  let prevSlug;
   try {
     const event = await Event.findOne({ slug, organizer: communityId });
     if (!event) return res.status(404).json({ message: 'Event not found.' });
-
     const allowedUpdates = [
       'title',
       'description',
@@ -114,6 +117,7 @@ export const updateCommunityEvent = async (req, res) => {
     if (!isValidUpdate)
       return res.status(400).json({ message: 'Provide Valid Updates!' });
     if (requestedUpdates.includes('title')) {
+      prevSlug = slug;
       slug = slugify(req.body.title, { lower: true });
     }
     if (eventBanner) {
@@ -138,8 +142,14 @@ export const updateCommunityEvent = async (req, res) => {
         runValidators: true, // This option runs the validators defined in the userSchema for the updates
       }
     );
+
     if (!updatedEvent)
       return res.status(400).json({ message: 'Unable to Update the Event!' });
+    if (requestedUpdates.includes('title')) {
+      const cacheKey = prevSlug;
+      await redis.del(cacheKey);
+    }
+
     return res.status(201).json({ message: 'Event Updated!' });
   } catch (error) {
     console.error('Error updating event:', error);
@@ -159,6 +169,8 @@ export const deleteCommunityEvent = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'Something Went Wrong. Try Again!' });
+    const cacheKey = `event.${deletedEvent.slug}`;
+    await redis.del(cacheKey);
     return res.status(200).json({ message: 'Event deleted successfully.' });
   } catch (error) {
     console.error('Error deleting event:', error);

@@ -12,6 +12,7 @@ import Token from '../../models/token.js';
 import sendMail from '../../utils/sendMail.js';
 import crypto from 'crypto';
 import { io } from '../../index.js';
+import { redis } from '../../connections/redis.js';
 export const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
   console.log(req.body);
@@ -96,77 +97,45 @@ export const verifyEmailLink = async (req, res) => {
 };
 export const loginUser = async (req, res) => {
   const { identifier, password } = req.body;
-  if (!password || password.length < 8)
-    return res.status(400).json({ message: 'Provide Valid Password!' });
-  if (!identifier)
+
+  // Perform manual validation
+  if (!identifier || !password) {
     return res
       .status(400)
-      .json({ message: 'Provide Identifier i.e Email or Password!' });
-  let userExist;
+      .json({ message: 'Both identifier and password are required' });
+  }
+
+  const isEmail = validateEmail(identifier);
+  const userExist = await findUser(identifier, isEmail);
+
+  if (!userExist) {
+    return res.status(404).json({ message: 'User Not Found!' });
+  }
+
+  const validPassword = bcrypt.compare(password, userExist.password);
+
+  if (!validPassword) {
+    return res.status(401).json({ message: 'Incorrect Password!' });
+  }
+
   try {
-    const isEmail = validateEmail(identifier);
-    if (isEmail) {
-      userExist = await User.findOne({ email: identifier }).select(
-        'username email _id password verified isFirstLogin'
-      );
-    } else {
-      userExist = await User.findOne({ username: identifier }).select(
-        'username email _id password verified isFirstLogin'
-      );
-    }
-    if (!userExist) return res.status(404).json({ message: 'User Not Found!' });
-
-    const validPassword = bcrypt.compare(password, userExist.password);
-    if (!validPassword)
-      return res.status(401).json({ message: 'Incorrect Password!' });
-
     if (!userExist.verified) {
-      let token = await Token.findOne({ user: userExist._id });
-
-      if (!token) {
-        token = new Token({
-          user: userExist._id,
-          token: crypto.randomBytes(32).toString('hex'),
-        });
-        await token.save();
-        const url = `${process.env.CLIENT_URL}/users/${userExist.username}/verify/${token.token}`;
-        await sendMail(userExist.email, 'Verify Your Email!', url);
-        return res.status(201).json({
-          message: `An Email has been sent to your ${userExist.email}. Please Verify!`,
-        });
-      } else {
-        if (isTokenExpired(token)) {
-          await Token.deleteOne({ _id: token._id });
-          const token = new Token({
-            user: userExist._id,
-            token: crypto.randomBytes(32).toString('hex'),
-          });
-          await token.save();
-          const url = `${process.env.CLIENT_URL}/users/${userExist.username}/verify/${token.token}`;
-          await sendMail(userExist.email, 'Verify Your Email!', url);
-          return res.status(201).json({
-            message: 'An Email has been sent to your Email. Please Verify!',
-          });
-        }
-
-        return res.status(400).json({
-          message:
-            'An Email has already been sent to your Email. Please Verify!',
-        });
-      }
+      await handleVerificationToken(userExist);
+      return res.status(201).json({
+        message: `An Email has been sent to your ${userExist.email}. Please Verify!`,
+      });
     }
+
     if (userExist.isFirstLogin) {
-      userExist.isFirstLogin = false;
-      await userExist.save();
+      await handleFirstLogin(userExist);
     }
+
     const accessToken = await userExist.generateAuthToken();
-    res.cookie('userAccessToken', accessToken, {
-      httpOnly: true,
-      maxAge: 20 * 24 * 60 * 60 * 1000,
-    });
+    setAccessTokenCookie(res, accessToken);
+
     res.status(201).json({
-      message: 'Login Sucessfull',
-      accessToken: accessToken,
+      message: 'Login Successful',
+      accessToken,
       isFirstLogin: userExist.isFirstLogin,
       user: {
         username: userExist.username,
@@ -176,9 +145,59 @@ export const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log('Error in Login API : ' + error.message);
-    res.status(500).json({ message: error.message });
+    console.error('Error in Login API:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
+};
+
+// Find user function
+const findUser = async (identifier, isEmail) => {
+  const query = isEmail ? { email: identifier } : { username: identifier };
+  return await User.findOne(query).select(
+    'username email _id password verified isFirstLogin'
+  );
+};
+
+// Handle verification token function
+const handleVerificationToken = async (user) => {
+  let token = await Token.findOne({ user: user._id });
+
+  if (!token) {
+    token = new Token({
+      user: user._id,
+      token: crypto.randomBytes(32).toString('hex'),
+    });
+    await token.save();
+
+    const url = `${process.env.CLIENT_URL}/users/${user.username}/verify/${token.token}`;
+    await sendMail(user.email, 'Verify Your Email!', url);
+  } else {
+    if (isTokenExpired(token)) {
+      await Token.deleteOne({ _id: token._id });
+      token = new Token({
+        user: user._id,
+        token: crypto.randomBytes(32).toString('hex'),
+      });
+      await token.save();
+
+      const url = `${process.env.CLIENT_URL}/users/${user.username}/verify/${token.token}`;
+      await sendMail(user.email, 'Verify Your Email!', url);
+    }
+  }
+};
+
+// Handle first login function
+const handleFirstLogin = async (user) => {
+  user.isFirstLogin = false;
+  await user.save();
+};
+
+// Set access token cookie function
+const setAccessTokenCookie = (res, accessToken) => {
+  res.cookie('userAccessToken', accessToken, {
+    httpOnly: true,
+    maxAge: 20 * 24 * 60 * 60 * 1000,
+  });
 };
 
 export const updateUser = async (req, res) => {
@@ -253,6 +272,7 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 export const googleAuth = async (req, res) => {
   const { tokenId } = req.body;
   try {
@@ -331,12 +351,12 @@ export const validUser = async (req, res) => {
         select: 'title organizer description imageUrl',
       });
 
+    if (!validUser) res.json({ message: 'User is not valid' });
     validUser.favorites.blogs.forEach((blog) => {
       if (blog && blog.content && blog.content.length > 80) {
         blog.content = blog.content.slice(0, 150);
       }
     });
-    if (!validUser) res.json({ message: 'User is not valid' });
     res.status(201).json({
       user: validUser,
       accessToken: req.accessToken,
@@ -443,10 +463,23 @@ export const unFollowUser = async (req, res) => {
 export const getUserFollowings = async (req, res) => {
   const { userId } = req.params;
   if (!userId) return res.status(400).json({ message: 'Provide user id' });
+
   try {
-    const user = await User.findOne({ _id: userId });
+    const key = `${userId}.followings`;
+    const cacheData = await redis.get(key);
+    if (cacheData)
+      return res.status(200).json({ followings: JSON.parse(cacheData) });
+    const user = await User.findOne({ _id: userId })
+      .select('followings')
+      .populate({
+        path: 'followings',
+        select: 'profilePhoto username',
+      });
+
     if (!user) return res.status(404).json({ message: 'User not found.' });
     const followings = user.followings;
+    await redis.set(key, JSON.stringify(followings), 'EX', 3600);
+
     res.status(200).json({ followings });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -456,9 +489,21 @@ export const getUserFollowers = async (req, res) => {
   const { userId } = req.params;
   if (!userId) return res.status(400).json({ message: 'Provide user id' });
   try {
-    const user = await User.findOne({ _id: userId });
+    const key = `${userId}.followers`;
+    const cacheData = await redis.get(key);
+    if (cacheData)
+      return res.status(200).json({ followers: JSON.parse(cacheData) });
+    const user = await User.findOne({ _id: userId })
+      .select('followers')
+      .populate({
+        path: 'followers',
+        select: 'profilePhoto username',
+      });
+    console.log('i am here');
     if (!user) return res.status(404).json({ message: 'User not found.' });
     const followers = user.followers;
+    await redis.set(key, JSON.stringify(followers), 'EX', 3600);
+
     res.status(200).json({ followers });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -466,9 +511,15 @@ export const getUserFollowers = async (req, res) => {
 };
 export const userFavorites = async (req, res) => {
   try {
+    const key = `favorites`;
+    const cacheData = await redis.get(key);
+    if (cacheData)
+      return res.status(200).json({ favorites: JSON.parse(cacheData) });
     const { favorites } = await User.findOne({ _id: req.rootUser._id })
       .populate('favorites.blogs')
       .populate('favorites.events');
+    await redis.set(key, JSON.stringify(favorites), 'EX', 3600);
+
     res.status(200).json({ favorites });
   } catch (error) {
     res.status(500).json({ message: error.message });

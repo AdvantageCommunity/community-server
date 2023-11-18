@@ -5,6 +5,7 @@ import { uploadToS3 } from '../../../connections/aws.js';
 import { io } from '../../../index.js';
 import User from '../../../models/users.js';
 import Community from '../../../models/community.js';
+import { redis } from '../../../connections/redis.js';
 export const postBlog = async (req, res) => {
   const { title, content, tags } = req.body;
   const coverImage = req.file;
@@ -33,7 +34,11 @@ export const postBlog = async (req, res) => {
     });
     await blog.save();
     req.rootUser.blogs.push(blog._id);
+
     await req.rootUser.save();
+    const cacheKey = 'blogs';
+    await redis.del(cacheKey);
+
     return res.status(201).json({ message: 'Blog Added Successfully!', blog });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -43,6 +48,7 @@ export const updateBlog = async (req, res) => {
   let { slug } = req.params;
   const coverImage = req.file;
   let coverImageUrl;
+  let prevSlug;
   try {
     const blog = await Blog.findOne({
       slug,
@@ -59,6 +65,7 @@ export const updateBlog = async (req, res) => {
     if (!isValidUpdate)
       return res.status(400).json({ message: 'Provide Valid Updates!' });
     if (requestedUpdates.includes('title')) {
+      prevSlug = slug;
       slug = slugify(req.body.title, { lower: true });
     }
     if (coverImage) {
@@ -78,6 +85,10 @@ export const updateBlog = async (req, res) => {
     );
     if (!updatedUser)
       return res.status(400).json({ message: 'Unable to Update the Blog!' });
+    if (requestedUpdates.includes('title')) {
+      const cacheKey = `blog.${prevSlug}`;
+      await redis.del(cacheKey);
+    }
     return res.status(201).json({ message: 'Blog Updated!' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -101,6 +112,8 @@ export const deleteBlog = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'Something Went Wrong. Try Again!' });
+    const cacheKey = `blog.${deleteBlog.slug}`;
+    await redis.del(cacheKey);
     return res.status(200).json({ message: 'Blog deleted successfully.' });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -6,8 +6,10 @@ export const isUserAuthenticated = async (req, res, next) => {
   if (!authorizationHeader) {
     return res.status(401).json({ message: 'Not Authorized! Login first' });
   }
-  let accessToken = authorizationHeader.split(' ')[0];
-  console.log(accessToken);
+  // let accessToken = authorizationHeader.split(' ')[0]; // when using localhost
+
+  let accessToken = authorizationHeader.split(' ')[1]; // when using postman
+
   if (accessToken.length < 500) {
     let verfiyToken;
     try {

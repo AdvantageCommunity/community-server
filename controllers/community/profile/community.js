@@ -1,9 +1,9 @@
 import { uploadToS3 } from '../../../connections/aws.js';
+import { redis } from '../../../connections/redis.js';
 import { io } from '../../../index.js';
 import Community from '../../../models/community.js';
 import User from '../../../models/users.js';
 import { isValidContacts } from '../../../utils/validations.js';
-
 export const registerCommunity = async (req, res) => {
   let { name, description, contacts, tags } = req.body;
   if (req.rootUser.communities.length > 0)
@@ -56,6 +56,9 @@ export const registerCommunity = async (req, res) => {
       role: 'admin',
     });
     await req.rootUser.save();
+
+    const cacheKey = 'communities';
+    await redis.del(cacheKey);
     res
       .status(201)
       .json({ message: 'Community creation request submitted successfully.' });
@@ -154,6 +157,8 @@ export const updateCommunityDetails = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'Something went wrong when updating.' });
+    const cacheKey = `community.${updatedCommunity.slug}`;
+    await redis.del(cacheKey);
     res.status(201).json({ message: 'Community Detials updated.' });
   } catch (error) {
     console.error('Error in Community updation Request API:', error);
