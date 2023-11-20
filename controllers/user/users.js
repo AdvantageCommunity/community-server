@@ -333,34 +333,36 @@ export const googleAuth = async (req, res) => {
 
 export const validUser = async (req, res) => {
   try {
-    let validUser = await User.findOne({ _id: req.rootUser._id })
+    if (req.rootUser?._id) {
+      let validUser = await User.findOne({ _id: req.rootUser._id })
 
-      .populate({
-        path: 'favorites.blogs',
-        model: 'Blog',
-        select: 'title author content coverImage createdAt slug read',
-        populate: {
-          path: 'author', // Specify the path to the author field in the Blog model
-          model: 'User', // Assuming 'User' is the model for authors
-          select: 'username profilePhoto', // Select the fields you want from the author
-        },
-      })
-      .populate({
-        path: 'favorites.events',
-        model: 'Event',
-        select: 'title organizer description imageUrl',
+        .populate({
+          path: 'favorites.blogs',
+          model: 'Blog',
+          select: 'title author content coverImage createdAt slug read',
+          populate: {
+            path: 'author', // Specify the path to the author field in the Blog model
+            model: 'User', // Assuming 'User' is the model for authors
+            select: 'username profilePhoto', // Select the fields you want from the author
+          },
+        })
+        .populate({
+          path: 'favorites.events',
+          model: 'Event',
+          select: 'title organizer description imageUrl',
+        });
+
+      if (!validUser) res.json({ message: 'User is not valid' });
+      validUser.favorites.blogs.forEach((blog) => {
+        if (blog && blog.content && blog.content.length > 80) {
+          blog.content = blog.content.slice(0, 150);
+        }
       });
-
-    if (!validUser) res.json({ message: 'User is not valid' });
-    validUser.favorites.blogs.forEach((blog) => {
-      if (blog && blog.content && blog.content.length > 80) {
-        blog.content = blog.content.slice(0, 150);
-      }
-    });
-    res.status(201).json({
-      user: validUser,
-      accessToken: req.accessToken,
-    });
+      res.status(201).json({
+        user: validUser,
+        accessToken: req.accessToken,
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
     console.log(error);

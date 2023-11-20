@@ -9,30 +9,32 @@ export const isUserAuthenticated = async (req, res, next) => {
   // let accessToken = authorizationHeader.split(' ')[0]; // when using localhost
 
   let accessToken = authorizationHeader.split(' ')[1]; // when using postman
-
-  if (accessToken.length < 500) {
-    let verfiyToken;
-    try {
-      verfiyToken = jwt.verify(accessToken, process.env.JWT_SECRET);
-    } catch (error) {
-      return res.status(400).json({ message: 'Invalid Token!' });
+  if (accessToken) {
+    if (accessToken.length < 500) {
+      let verfiyToken;
+      try {
+        verfiyToken = jwt.verify(accessToken, process.env.JWT_SECRET);
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid Token!' });
+      }
+      const verifiedUser = await User.findOne({ _id: verfiyToken.id })?.select(
+        '-password'
+      );
+      if (!verifiedUser)
+        return res
+          .status(401)
+          .json({ message: 'Not Authorized. Login First!' });
+      req.rootUser = verifiedUser;
+      req.userToken = accessToken;
+    } else {
+      const verifyGoogleToken = jwt.decode(accessToken);
+      const verifiedUser = await User.findOne({
+        email: verifyGoogleToken.email,
+      })?.select('-password');
+      req.rootUser = verifiedUser;
+      req.accessToken = accessToken;
     }
-    const verifiedUser = await User.findOne({ _id: verfiyToken.id })?.select(
-      '-password'
-    );
-    if (!verifiedUser)
-      return res.status(401).json({ message: 'Not Authorized. Login First!' });
-    req.rootUser = verifiedUser;
-    req.userToken = accessToken;
-  } else {
-    const verifyGoogleToken = jwt.decode(accessToken);
-    const verifiedUser = await User.findOne({
-      email: verifyGoogleToken.email,
-    })?.select('-password');
-    req.rootUser = verifiedUser;
-    req.accessToken = accessToken;
   }
-
   next();
 };
 export const checkCommunityAdmin = async (req, res, next) => {
