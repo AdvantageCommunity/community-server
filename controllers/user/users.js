@@ -333,6 +333,7 @@ export const googleAuth = async (req, res) => {
 
 export const validUser = async (req, res) => {
   try {
+    console.log('I am here');
     if (req.rootUser?._id) {
       let validUser = await User.findOne({ _id: req.rootUser._id })
 
@@ -351,7 +352,7 @@ export const validUser = async (req, res) => {
           model: 'Event',
           select: 'title organizer description imageUrl',
         });
-
+      console.log(validUser);
       if (!validUser) res.json({ message: 'User is not valid' });
       validUser.favorites.blogs.forEach((blog) => {
         if (blog && blog.content && blog.content.length > 80) {

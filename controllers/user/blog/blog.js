@@ -8,6 +8,7 @@ import Community from '../../../models/community.js';
 import { redis } from '../../../connections/redis.js';
 export const postBlog = async (req, res) => {
   const { title, content, tags } = req.body;
+
   const coverImage = req.file;
   if (!title) return res.status(400).json({ message: 'Provide Title!' });
   if (!content) return res.status(400).json({ message: 'Provide Content!' });

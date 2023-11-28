@@ -241,7 +241,8 @@ export const upcommingEvents = async (req, res) => {
   try {
     const key = 'upcomingEvents';
     const cacheData = await redis.get(key);
-    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
+    if (cacheData)
+      return res.status(200).json({ events: JSON.parse(cacheData) });
     const events = await Event.find({ date: { $gt: currentDate } });
     await redis.set(key, JSON.stringify(events), 'EX', 3600);
 
@@ -257,7 +258,10 @@ export const pastEvents = async (req, res) => {
   try {
     const key = 'pastEvents';
     const cacheData = await redis.get(key);
-    if (cacheData) return res.status({ tags: JSON.parse(cacheData) });
+
+    if (cacheData)
+      return res.status(200).json({ events: JSON.parse(cacheData) });
+
     const events = await Event.find({ date: { $lt: currentDate } });
     await redis.set(key, JSON.stringify(events), 'EX', 3600);
 
