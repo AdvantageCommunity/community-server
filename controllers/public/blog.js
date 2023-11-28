@@ -29,11 +29,13 @@ export const getBlogBySlug = async (req, res) => {
   try {
     const key = `blog.${slug}`;
     const cacheData = await redis.get(key);
+
     if (cacheData) return res.status(200).json({ blog: JSON.parse(cacheData) });
     const blog = await Blog.findOne({ slug })
       .populate('author', 'profilePhoto username')
       .populate('communityAuthor', 'logo name')
       .populate('comments.user', 'username profilePhoto');
+
     if (!blog) return res.status(404).json({ message: 'Blog not found.' });
     await redis.set(key, JSON.stringify(blog), 'EX', 3600);
 

@@ -15,7 +15,6 @@ export const isUserAuthenticated = async (req, res, next) => {
   if (accessToken.length < 500) {
     let verfiyToken;
     try {
-      console.log(process.env.JWT_SECRET);
       verfiyToken = jwt.verify(accessToken, process.env.JWT_SECRET);
     } catch (error) {
       console.log(error);

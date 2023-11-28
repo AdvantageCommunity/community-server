@@ -169,6 +169,8 @@ export const likeABlog = async (req, res) => {
           io.to(recipient._id).emit('notification', notification);
         }
       }
+      const cacheKey = `blog.${blogToLike.slug}`;
+      await redis.del(cacheKey);
       return res.status(200).json({
         message: 'Blog liked successfully',
         likes: blogToLike.likes,
@@ -208,6 +210,8 @@ export const unLikeABlog = async (req, res) => {
       await blogToUnLike.save();
 
       // Return a status code of 200 OK for a successful unlike
+      const cacheKey = `blog.${blogToUnLike.slug}`;
+      await redis.del(cacheKey);
       return res.status(200).json({
         message: 'Blog unliked successfully',
         likes: blogToUnLike.likes,
@@ -269,6 +273,8 @@ export const commentOnBlog = async (req, res) => {
         io.to(recipient._id).emit('notification', notification);
       }
     }
+    const cacheKey = `blog.${blog.slug}`;
+    await redis.del(cacheKey);
     res.status(201).json({ success: 'Comment Added!', comment: savedComment });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -297,6 +303,8 @@ export const deleteComment = async (req, res) => {
           return res.status(404).json({ message: 'Comment not found' });
         blog.comments.splice(commentIdex, 1);
         await blog.save();
+        const cacheKey = `blog.${blog.slug}`;
+        await redis.del(cacheKey);
         return res.status(200).json({ message: 'Comment deleted' });
       } else {
         return res
