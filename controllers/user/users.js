@@ -333,7 +333,13 @@ export const googleAuth = async (req, res) => {
 
 export const validUser = async (req, res) => {
   try {
-    console.log('I am here');
+    const key = `user.${req.rootUser?._id}`;
+    const cacheData = await redis.get(key);
+
+    if (cacheData)
+      return res
+        .status(200)
+        .json({ user: JSON.parse(cacheData), accessToken: req.accessToken });
     if (req.rootUser?._id) {
       let validUser = await User.findOne({ _id: req.rootUser._id })
 
@@ -352,13 +358,14 @@ export const validUser = async (req, res) => {
           model: 'Event',
           select: 'title organizer description imageUrl',
         });
-      console.log(validUser);
+
       if (!validUser) res.json({ message: 'User is not valid' });
       validUser.favorites.blogs.forEach((blog) => {
         if (blog && blog.content && blog.content.length > 80) {
           blog.content = blog.content.slice(0, 150);
         }
       });
+      await redis.set(key, JSON.stringify(validUser), 'EX', 3600);
       res.status(201).json({
         user: validUser,
         accessToken: req.accessToken,
