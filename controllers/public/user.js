@@ -25,6 +25,7 @@ export const getAllUsers = async (req, res) => {
 };
 export const getUserById = async (req, res) => {
   const { username } = req.params;
+  console.log(username);
   if (!username) return res.status(400).json({ message: 'Provide User ID!' });
   try {
     const key = `user.${username}`;
@@ -44,7 +45,7 @@ export const getUserById = async (req, res) => {
         select: 'name logo description tags admins',
       })
       .select('-password');
-
+    console.log(user);
     const userDetails = {
       ...user._doc, // Copy all properties from user._doc
       phoneNumber: user.phone.phoneNumber, // Add phoneNumber property
@@ -68,10 +69,10 @@ export const searchUsers = async (req, res) => {
     return res.status(400).json({ message: 'Search parameter is required' });
   }
   try {
-    const key = `user.search.${search}`;
-    const cacheData = await redis.get(key);
-    if (cacheData)
-      return res.status(200).json({ users: JSON.parse(cacheData) });
+    // const key = `user.search.${search}`;
+    // const cacheData = await redis.get(key);
+    // if (cacheData)
+    //   return res.status(200).json({ users: JSON.parse(cacheData) });
     const users = await User.find({
       $and: [
         {
@@ -84,7 +85,7 @@ export const searchUsers = async (req, res) => {
     })
       .select('-password')
       .sort({ createdAt: -1 });
-    await redis.set(key, JSON.stringify(users), 'EX', 3600);
+    // await redis.set(key, JSON.stringify(users), 'EX', 3600);
 
     return res.status(200).json({ users });
   } catch (error) {

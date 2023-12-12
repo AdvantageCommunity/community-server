@@ -5,16 +5,16 @@ import Event from '../../models/event.js';
 
 export const getAllBlogs = async (req, res) => {
   try {
-    const key = 'blogs';
-    const cacheData = await redis.get(key);
-    if (cacheData)
-      return res.status(200).json({ blogs: JSON.parse(cacheData) });
+    // const key = 'blogs';
+    // const cacheData = await redis.get(key);
+    // if (cacheData)
+    //   return res.status(200).json({ blogs: JSON.parse(cacheData) });
     const blogs = await Blog.find()
       .populate('author', 'username profilePhoto')
       .populate('communityAuthor', 'name logo')
       .sort({ createdAt: -1 });
 
-    await redis.set(key, JSON.stringify(blogs), 'EX', 3600);
+    // await redis.set(key, JSON.stringify(blogs), 'EX', 3600);
     res.status(200).json({ blogs }); // Send the users as a JSON response
   } catch (error) {
     res
@@ -52,9 +52,9 @@ export const searchBlogs = async (req, res) => {
   if (!search) {
     return res.status(400).json({ message: 'Search parameter is required' });
   }
-  const key = `blog.search.${search}`;
-  const cacheData = await redis.get(key);
-  if (cacheData) return res.status(200).json({ blogs: JSON.parse(cacheData) });
+  // const key = `blog.search.${search}`;
+  // const cacheData = await redis.get(key);
+  // if (cacheData) return res.status(200).json({ blogs: JSON.parse(cacheData) });
   try {
     const blogs = await Blog.find({
       $or: [
@@ -64,7 +64,7 @@ export const searchBlogs = async (req, res) => {
     })
       .populate('author', 'profilePhoto username')
       .sort({ createdAt: -1 });
-    await redis.set(key, JSON.stringify(blogs), 'EX', 3600);
+    // await redis.set(key, JSON.stringify(blogs), 'EX', 3600);
 
     return res.status(200).json({ blogs });
   } catch (error) {

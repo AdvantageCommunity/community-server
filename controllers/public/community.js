@@ -68,10 +68,10 @@ export const searchCommunity = async (req, res) => {
   const { search } = req.query;
 
   try {
-    const key = `community.search.${search}`;
-    const cacheData = await redis.get(key);
-    if (cacheData)
-      return res.status(200).json({ communities: JSON.parse(cacheData) });
+    // const key = `community.search.${search}`;
+    // const cacheData = await redis.get(key);
+    // if (cacheData)
+    //   return res.status(200).json({ communities: JSON.parse(cacheData) });
     const communities = await Community.find({
       // status: 'active',
       $or: [
@@ -79,7 +79,7 @@ export const searchCommunity = async (req, res) => {
         { tags: { $in: [new RegExp(search, 'i')] } },
       ],
     }).sort({ createdAt: -1 });
-    await redis.set(key, JSON.stringify(communities), 'EX', 3600);
+    // await redis.set(key, JSON.stringify(communities), 'EX', 3600);
 
     res.status(200).json({ communities });
   } catch (error) {
@@ -169,21 +169,21 @@ export const searchEvent = async (req, res) => {
   const query = {};
 
   try {
-    let cacheKey = 'searchEvents:';
-    if (title) cacheKey += `title-${title}:`;
-    if (startDate) cacheKey += `startDate-${startDate}:`;
-    if (endDate) cacheKey += `endDate-${endDate}:`;
-    if (venue) cacheKey += `venue-${venue}:`;
-    if (eventType) cacheKey += `eventType-${eventType}:`;
-    if (tags) cacheKey += `tags-${tags}:`;
-    if (location) cacheKey += `location-${location}:`;
+    // let cacheKey = 'searchEvents:';
+    // if (title) cacheKey += `title-${title}:`;
+    // if (startDate) cacheKey += `startDate-${startDate}:`;
+    // if (endDate) cacheKey += `endDate-${endDate}:`;
+    // if (venue) cacheKey += `venue-${venue}:`;
+    // if (eventType) cacheKey += `eventType-${eventType}:`;
+    // if (tags) cacheKey += `tags-${tags}:`;
+    // if (location) cacheKey += `location-${location}:`;
 
     if (search) {
       // If search is provided, use a separate cache key and return cached results if available
-      const cachedResults = await client.get(`searchEvents:search-${search}`);
-      if (cachedResults) {
-        return res.status(200).json({ events: JSON.parse(cachedResults) });
-      }
+      // const cachedResults = await client.get(`searchEvents:search-${search}`);
+      // if (cachedResults) {
+      //   return res.status(200).json({ events: JSON.parse(cachedResults) });
+      // }
     }
 
     if (title) {
@@ -216,19 +216,19 @@ export const searchEvent = async (req, res) => {
     const events = await Event.find(query).exec();
 
     // Cache the results if not empty and if search parameter is not present
-    if (events.length > 0 && !search) {
-      await client.set(cacheKey, JSON.stringify(events), 'EX', 3600);
-    }
+    // if (events.length > 0 && !search) {
+    //   await client.set(cacheKey, JSON.stringify(events), 'EX', 3600);
+    // }
 
     // Cache the results if search parameter is present
-    if (search) {
-      await client.set(
-        `searchEvents:search-${search}`,
-        JSON.stringify(events),
-        'EX',
-        3600
-      );
-    }
+    // if (search) {
+    //   await client.set(
+    //     `searchEvents:search-${search}`,
+    //     JSON.stringify(events),
+    //     'EX',
+    //     3600
+    //   );
+    // }
 
     res.status(200).json({ events });
   } catch (error) {

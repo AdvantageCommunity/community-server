@@ -40,7 +40,9 @@ export const postBlog = async (req, res) => {
     const cacheKey = 'blogs';
     await redis.del(cacheKey);
 
-    return res.status(201).json({ message: 'Blog Added Successfully!', blog });
+    return res
+      .status(201)
+      .json({ message: 'Blog Added Successfully!', ok: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -320,6 +322,7 @@ export const deleteComment = async (req, res) => {
 };
 export const favoriteBlog = async (req, res) => {
   const { blogId } = req.params;
+  console.log(blogId);
   if (!blogId) return res.status(400).json({ message: 'Provide blog id ' });
   try {
     const blogExists = await Blog.findOne({ _id: blogId });
