@@ -25,7 +25,7 @@ export const getAllUsers = async (req, res) => {
 };
 export const getUserById = async (req, res) => {
   const { username } = req.params;
-  console.log(username);
+
   if (!username) return res.status(400).json({ message: 'Provide User ID!' });
   try {
     const key = `user.${username}`;

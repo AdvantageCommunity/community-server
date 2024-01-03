@@ -14,6 +14,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-10-10T00:00:00Z'),
     organizer: {
       logo: 'https://cdn.iconscout.com/icon/free/png-256/free-react-1-282599.png?f=webp',
+      name: 'React Group',
     }, // Replace with an actual ObjectId
     slug: 'tech-summit-2023',
     attendees: ['AttendeeID1', 'AttendeeID2'], // Replace with actual User ObjectIds
@@ -37,6 +38,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-11-15T00:00:00Z'),
     organizer: {
       logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTziNT7AW5MEFDwtHDBUYvvbIg2D6RfRQGw1QBKtq30k8-n5bMQtyqzPEuJoS_ds48Y5Y&usqp=CAU',
+      name: '',
     }, // Replace with an actual ObjectId
     slug: 'music-festival-2023',
     attendees: ['AttendeeID3'], // Replace with an actual User ObjectId
@@ -60,6 +62,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-09-20T00:00:00Z'),
     organizer: {
       logo: 'https://upload.wikimedia.org/wikipedia/commons/6/62/ART_Television_%28Sri_Lanka%29_%28logo%29.png',
+      name: 'ART',
     }, // Replace with an actual ObjectId
     slug: 'art-exhibition-beyond-canvas',
     attendees: [], // Replace with actual User ObjectIds
@@ -83,6 +86,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-10-30T00:00:00Z'),
     organizer: {
       logo: 'https://cdn.iconscout.com/icon/free/png-256/free-react-1-282599.png?f=webp',
+      name: 'T-Hub',
     }, // Replace with an actual ObjectId
     slug: 'startup-pitch-competition',
     attendees: [], // Replace with actual User ObjectIds
@@ -106,6 +110,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-10-20T00:00:00Z'),
     organizer: {
       logo: 'https://cdn.iconscout.com/icon/free/png-256/free-react-1-282599.png?f=webp',
+      name: 'React',
     }, // Replace with an actual ObjectId
     slug: 'food-festival-taste-of-the-world',
     attendees: [], // Replace with actual User ObjectIds
@@ -129,6 +134,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-09-20T00:00:00Z'),
     organizer: {
       logo: 'https://cdn.iconscout.com/icon/free/png-256/free-react-1-282599.png?f=webp',
+      name: 'MLH Hyd',
     }, // Replace with an actual ObjectId
     slug: 'virtual-coding-bootcamp',
     attendees: [], // Replace with actual User ObjectIds
@@ -152,6 +158,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-11-05T00:00:00Z'),
     organizer: {
       logo: 'https://cdn.iconscout.com/icon/free/png-256/free-react-1-282599.png?f=webp',
+      name: 'Sci-Fi',
     }, // Replace with an actual ObjectId
     slug: 'science-symposium-2023',
     attendees: [], // Replace with actual User ObjectIds
@@ -175,6 +182,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-09-25T00:00:00Z'),
     organizer: {
       logo: 'https://cdn.iconscout.com/icon/free/png-256/free-react-1-282599.png?f=webp',
+      name: 'Cult Fit',
     }, // Replace with an actual ObjectId
     slug: 'fitness-challenge-10k-run',
     attendees: [], // Replace with actual User ObjectIds
@@ -198,6 +206,7 @@ export const featuredEventsData = [
     registrationDeadline: new Date('2023-11-10T00:00:00Z'),
     organizer: {
       logo: 'https://cdn.iconscout.com/icon/free/png-256/free-react-1-282599.png?f=webp',
+      name: 'T-Hub',
     }, // Replace with an actual ObjectId
     slug: 'startup-networking-mixer',
     attendees: [], // Replace with actual User ObjectIds

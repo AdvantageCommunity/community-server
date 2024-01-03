@@ -26,10 +26,10 @@ export const communityBySlug = async (req, res) => {
   const { slug } = req.params;
   if (!slug) res.status(404).json({ message: 'Provide community id.' });
   try {
-    const key = `community.${slug}`;
-    const cacheData = await redis.get(key);
-    if (cacheData)
-      return res.status(200).json({ community: JSON.parse(cacheData) });
+    // const key = `community.${slug}`;
+    // const cacheData = await redis.get(key);
+    // if (cacheData)
+    //   return res.status(200).json({ community: JSON.parse(cacheData) });
     const community = await Community.findOne({
       slug,
       // status: 'active',
@@ -55,7 +55,7 @@ export const communityBySlug = async (req, res) => {
         },
       })
       .populate('admins', 'username profilePhoto email');
-    await redis.set(key, JSON.stringify(community), 'EX', 3600);
+    // await redis.set(key, JSON.stringify(community), 'EX', 3600);
 
     res.status(200).json({ community });
   } catch (error) {
@@ -138,16 +138,15 @@ export const eventBySlug = async (req, res) => {
   if (!slug) res.status(404).json({ message: 'Provide event slug.' });
 
   try {
-    const key = `event.${slug}`;
-    const cacheData = await redis.get(key);
-    if (cacheData)
-      return res.status(200).json({ event: JSON.parse(cacheData) });
+    // const key = `event.${slug}`;
+    // const cacheData = await redis.get(key);
+    // if (cacheData)
+    //   return res.status(200).json({ event: JSON.parse(cacheData) });
     const event = await Event.findOne({ slug }).populate(
       'organizer',
       'logo name _id'
     );
-    await redis.set(key, JSON.stringify(event), 'EX', 3600);
-
+    // await redis.set(key, JSON.stringify(event), 'EX', 3600);
     return res.status(200).json({ event });
   } catch (error) {
     console.error('Error in eventById API:', error);
