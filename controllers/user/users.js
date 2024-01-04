@@ -131,6 +131,7 @@ export const loginUser = async (req, res) => {
     }
 
     const accessToken = await userExist.generateAuthToken();
+    console.log(accessToken);
     setAccessTokenCookie(res, accessToken);
 
     res.status(201).json({
