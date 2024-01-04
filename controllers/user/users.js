@@ -366,7 +366,6 @@ export const validUser = async (req, res) => {
           blog.content = blog.content.slice(0, 150);
         }
       });
-      console.log(validUser);
       // await redis.set(key, JSON.stringify(validUser), 'EX', 3600);
       res.status(201).json({
         user: validUser,

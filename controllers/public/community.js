@@ -6,6 +6,7 @@ export const allCommunities = async (req, res) => {
   try {
     const key = 'communities';
     const cachedCommunties = await redis.get(key);
+    console.log(cachedCommunties);
     if (cachedCommunties)
       return res
         .status(200)
