@@ -15,7 +15,7 @@ import { io } from '../../index.js';
 import { redis } from '../../connections/redis.js';
 export const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
-  console.log(req.body);
+
   if (!username)
     return res.status(400).json({ message: 'Username is Required!' });
   const isValidUsername = validUsername(username);

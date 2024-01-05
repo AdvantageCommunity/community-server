@@ -45,7 +45,7 @@ export const getUserById = async (req, res) => {
         select: 'name logo description tags admins',
       })
       .select('-password');
-    console.log(user);
+
     const userDetails = {
       ...user._doc, // Copy all properties from user._doc
       phoneNumber: user.phone.phoneNumber, // Add phoneNumber property
