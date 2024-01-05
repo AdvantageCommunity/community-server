@@ -17,30 +17,27 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8000;
 // MongoDB connection
-connectDB();
-const corsOptions = {
-  origin: [
-    'https://dashboard-advantagecommunity.onrender.com',
-    'https://advantagecommunity.in',
-    'http://localhost:3000',
-  ],
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  allowedHeaders: 'Content-Type,Authorization',
-  credentials: true,
-};
-app.use(cors());
-app.use(function (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, DELETE, PATCH'
-  );
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  next();
-});
+// const corsOptions = {
+//   origin: [
+//     'https://dashboard-advantagecommunity.onrender.com',
+//     'https://advantagecommunity.in',
+//     'http://localhost:3000',
+//   ],
+//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//   allowedHeaders: 'Content-Type,Authorization',
+//   credentials: true,
+// };
+app.use(
+  cors({
+    origin: 'https://dashboard-advantagecommunity.onrender.com',
+    // methods: 'GET, HEAD, PUT, PATCH, POST, DELETE',
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+connectDB();
 // user related routes
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/user/blog', userBlogRoutes);
