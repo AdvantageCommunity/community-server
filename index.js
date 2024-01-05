@@ -26,16 +26,11 @@ const corsOptions = {
     'https://dashboard.advantagecommunity.in',
   ],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  allowedHeaders: 'Content-Type,Authorization',
+  allowedHeaders: '*',
 };
 
 app.use(cors(corsOptions));
-// app.use(
-//   cors({
 
-//     origin: 'http://localhost:3000',
-//   })
-// );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // user related routes
