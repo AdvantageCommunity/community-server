@@ -19,12 +19,13 @@ const PORT = process.env.PORT || 8000;
 // MongoDB connection
 connectDB();
 const corsOptions = {
-  origin: [
-    'https://www.advantagecommunity.in',
-    'http://localhost:3000',
-    'https://dashboard-advantagecommunity.onrender.com',
-    'https://dashboard.advantagecommunity.in',
-  ],
+  origin: '*',
+  //  [
+  //   'https://www.advantagecommunity.in',
+  //   'http://localhost:3000',
+  //   'https://dashboard-advantagecommunity.onrender.com',
+  //   'https://dashboard.advantagecommunity.in',
+  // ],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   allowedHeaders: '*',
 };
