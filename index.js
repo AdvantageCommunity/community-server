@@ -19,6 +19,7 @@ const PORT = process.env.PORT || 8000;
 // MongoDB connection
 const corsOptions = {
   origin: [
+    'https://applicationadvantagecommunity.onrender.com',
     'https://dashboard-advantagecommunity.onrender.com',
     'https://advantagecommunity.in',
     'http://localhost:3000',
