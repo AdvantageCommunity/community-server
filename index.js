@@ -20,17 +20,14 @@ const PORT = process.env.PORT || 8000;
 connectDB();
 const corsOptions = {
   origin: [
-    'https://www.advantagecommunity.in',
-    'http://localhost:3000',
     'https://dashboard-advantagecommunity.onrender.com',
-    'https://dashboard.advantagecommunity.in',
+    'https://advantagecommunity.in',
   ],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type,Authorization',
   credentials: true,
 };
-
 app.use(cors(corsOptions));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // user related routes
