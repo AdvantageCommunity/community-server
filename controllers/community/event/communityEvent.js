@@ -1,8 +1,8 @@
 import Event from '../../../models/event.js';
 import slugify from 'slugify';
-import { uploadToS3 } from '../../../connections/aws.js';
+import { uploadToS3 } from '../../../config/aws.js';
 import { io } from '../../../index.js';
-import { redis } from '../../../connections/redis.js';
+import { redis } from '../../../config/redis.js';
 
 export const postCommunityEvent = async (req, res) => {
   const {

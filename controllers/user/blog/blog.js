@@ -1,11 +1,11 @@
 import slugify from 'slugify';
 import Blog from '../../../models/blog.js';
 import Event from '../../../models/event.js';
-import { uploadToS3 } from '../../../connections/aws.js';
+import { uploadToS3 } from '../../../config/aws.js';
 import { io } from '../../../index.js';
 import User from '../../../models/users.js';
 import Community from '../../../models/community.js';
-import { redis } from '../../../connections/redis.js';
+import { redis } from '../../../config/redis.js';
 export const postBlog = async (req, res) => {
   const { title, content, tags } = req.body;
 

@@ -5,14 +5,14 @@ import {
   validateEmail,
   isTokenExpired,
 } from '../../utils/validations.js';
-import { uploadToS3 } from '../../connections/aws.js';
+import { uploadToS3 } from '../../config/aws.js';
 import { OAuth2Client } from 'google-auth-library';
 import bcrypt from 'bcryptjs';
 import Token from '../../models/token.js';
 import sendMail from '../../utils/sendMail.js';
 import crypto from 'crypto';
 import { io } from '../../index.js';
-import { redis } from '../../connections/redis.js';
+import { redis } from '../../config/redis.js';
 export const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -143,6 +143,7 @@ export const loginUser = async (req, res) => {
         _id: userExist._id,
         email: userExist.email,
         verified: userExist.verified,
+        // profilePhoto: userExist.profilePhoto,
       },
     });
   } catch (error) {

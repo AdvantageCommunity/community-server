@@ -1,5 +1,5 @@
 import slugify from 'slugify';
-import { uploadToS3 } from '../../../connections/aws.js';
+import { uploadToS3 } from '../../../config/aws.js';
 import Blog from '../../../models/blog.js';
 import { io } from '../../../index.js';
 export const addCommunityBlog = async (req, res) => {

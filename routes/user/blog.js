@@ -11,7 +11,7 @@ import {
   unFavoriteBlog,
 } from '../../controllers/user/blog/blog.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
-import { upload } from '../../connections/aws.js';
+import { upload } from '../../config/aws.js';
 const router = express.Router();
 
 router.post('/me', upload.single('coverImage'), isUserAuthenticated, postBlog);

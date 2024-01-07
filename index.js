@@ -11,7 +11,7 @@ import userMessageRoutes from './routes/user/chat/message.js';
 import communityRoutes from './routes/community/community.js';
 import communityBlogRoutes from './routes/community/communityEventAndBlog.js';
 import communityRoomRoutes from './routes/community/communityRoom.js';
-import { connectDB } from './connections/mongoDB.js';
+import { connectDB } from './config/mongoDB.js';
 // Initializing DOTENV
 dotenv.config();
 const app = express();

@@ -15,7 +15,7 @@ import {
   validUser,
 } from '../../controllers/user/users.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
-import { upload } from '../../connections/aws.js';
+import { upload } from '../../config/aws.js';
 import { favoriteEvent } from '../../controllers/user/blog/blog.js';
 const router = express.Router();
 

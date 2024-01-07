@@ -8,7 +8,7 @@ import {
   deleteCommunityBlog,
   updatCommunityeBlog,
 } from '../../controllers/community/blog/communityBlog.js';
-import { upload } from '../../connections/aws.js';
+import { upload } from '../../config/aws.js';
 import {
   deleteCommunityEvent,
   postCommunityEvent,

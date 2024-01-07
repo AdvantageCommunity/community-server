@@ -1,4 +1,4 @@
-import { redis } from '../../connections/redis.js';
+import { redis } from '../../config/redis.js';
 import Blog from '../../models/blog.js';
 import Community from '../../models/community.js';
 import Event from '../../models/event.js';
@@ -12,6 +12,7 @@ export const getAllBlogs = async (req, res) => {
     const blogs = await Blog.find()
       .populate('author', 'username profilePhoto')
       .populate('communityAuthor', 'name logo')
+
       .sort({ createdAt: -1 });
 
     // await redis.set(key, JSON.stringify(blogs), 'EX', 3600);
@@ -34,7 +35,8 @@ export const getBlogBySlug = async (req, res) => {
     const blog = await Blog.findOne({ slug })
       .populate('author', 'profilePhoto username')
       .populate('communityAuthor', 'logo name')
-      .populate('comments.user', 'username profilePhoto');
+      .populate('comments.user', 'username profilePhoto')
+      .populate('likes.user', 'username profilePhoto');
 
     if (!blog) return res.status(404).json({ message: 'Blog not found.' });
     await redis.set(key, JSON.stringify(blog), 'EX', 3600);

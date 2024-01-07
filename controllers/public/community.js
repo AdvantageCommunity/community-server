@@ -1,21 +1,21 @@
-import { redis } from '../../connections/redis.js';
+import { redis } from '../../config/redis.js';
 import Community from '../../models/community.js';
 import Event from '../../models/event.js';
 import { featuredEventsData } from '../../utils/index.js';
 export const allCommunities = async (req, res) => {
   try {
-    const key = 'communities';
-    const cachedCommunties = await redis.get(key);
-    console.log(cachedCommunties);
-    if (cachedCommunties)
-      return res
-        .status(200)
-        .json({ communities: JSON.parse(cachedCommunties) });
+    // const key = 'communities';
+    // const cachedCommunties = await redis.get(key);
+
+    // if (cachedCommunties)
+    //   return res
+    //     .status(200)
+    //     .json({ communities: JSON.parse(cachedCommunties) });
 
     const communities = await Community.find({
       // status: 'active',
     }).sort({ createdAt: -1 });
-    await redis.set(key, JSON.stringify(communities), 'EX', 3600);
+    // await redis.set(key, JSON.stringify(communities), 'EX', 3600);
     res.status(200).json({ communities });
   } catch (error) {
     console.log('Error in all communities api : ' + error);

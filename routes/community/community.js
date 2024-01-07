@@ -10,7 +10,7 @@ import {
   removeCommunityMember,
   viewCommunityMembers,
 } from '../../controllers/community/profile/community.js';
-import { upload } from '../../connections/aws.js';
+import { upload } from '../../config/aws.js';
 import { isUserAuthenticated } from '../../middleware/user.js';
 const router = express.Router();
 

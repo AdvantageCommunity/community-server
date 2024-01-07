@@ -1,5 +1,5 @@
 import communityRoom from '../../../models/chat/communityRoom.js';
-import { uploadToS3 } from '../../../connections/aws.js';
+import { uploadToS3 } from '../../../config/aws.js';
 export const createCommunityRoom = async (req, res) => {
   const { name, description } = req.body;
   const { communityId } = req.params;

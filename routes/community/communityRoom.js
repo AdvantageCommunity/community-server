@@ -10,7 +10,7 @@ import {
   getCommunityRooms,
   updateCommunityRoom,
 } from '../../controllers/community/room/communityRoom.js';
-import { upload } from '../../connections/aws.js';
+import { upload } from '../../config/aws.js';
 const router = express.Router();
 router.get('/:communityId/room/all', isUserAuthenticated, getCommunityRooms);
 router.get(

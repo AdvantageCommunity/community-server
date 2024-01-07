@@ -1,5 +1,5 @@
-import { uploadToS3 } from '../../../connections/aws.js';
-import { redis } from '../../../connections/redis.js';
+import { uploadToS3 } from '../../../config/aws.js';
+import { redis } from '../../../config/redis.js';
 import { io } from '../../../index.js';
 import Community from '../../../models/community.js';
 import User from '../../../models/users.js';

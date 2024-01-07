@@ -1,4 +1,4 @@
-import { redis } from '../../connections/redis.js';
+import { redis } from '../../config/redis.js';
 import User from '../../models/users.js';
 export const getAllUsers = async (req, res) => {
   try {
@@ -28,12 +28,12 @@ export const getUserById = async (req, res) => {
 
   if (!username) return res.status(400).json({ message: 'Provide User ID!' });
   try {
-    const key = `user.${username}`;
-    const cacheData = await redis.get(key);
-    if (cacheData) return res.status(200).json({ user: JSON.parse(cacheData) });
+    // const key = `user.${username}`;
+    // const cacheData = await redis.get(key);
+    // if (cacheData) return res.status(200).json({ user: JSON.parse(cacheData) });
     let user = await User.findOne({ username })
       .select(
-        'firstName username lastName profilePhoto phone.phoneNumber dateOfBirth gender bio blogs'
+        'firstName username lastName email profilePhoto phone dateOfBirth gender bio blogs followers followings interests communities.role'
       )
       .populate({
         path: 'blogs',
@@ -42,7 +42,17 @@ export const getUserById = async (req, res) => {
       .populate({
         path: 'communities.community',
         model: 'Community',
-        select: 'name logo description tags admins',
+        select: 'name logo description tags admins role slug',
+      })
+      .populate({
+        path: 'followers',
+        model: 'User',
+        select: 'username profilePhoto',
+      })
+      .populate({
+        path: 'followings',
+        model: 'User',
+        select: 'username profilePhoto',
       })
       .select('-password');
 
@@ -53,7 +63,7 @@ export const getUserById = async (req, res) => {
     delete userDetails.phone;
     if (!userDetails)
       return res.status(404).json({ message: 'No user found!' });
-    await redis.set(key, JSON.stringify(userDetails), 'EX', 3600);
+    // await redis.set(key, JSON.stringify(userDetails), 'EX', 3600);
 
     return res.status(200).json({ user: userDetails });
   } catch (error) {
