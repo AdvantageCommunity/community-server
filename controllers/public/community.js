@@ -14,7 +14,9 @@ export const allCommunities = async (req, res) => {
 
     const communities = await Community.find({
       // status: 'active',
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .populate('members', 'username profilePhoto email');
     // await redis.set(key, JSON.stringify(communities), 'EX', 3600);
     res.status(200).json({ communities });
   } catch (error) {
@@ -55,7 +57,8 @@ export const communityBySlug = async (req, res) => {
           select: 'name logo',
         },
       })
-      .populate('admins', 'username profilePhoto email');
+      .populate('admins', 'username profilePhoto email')
+      .populate('members', 'username profilePhoto email ');
     // await redis.set(key, JSON.stringify(community), 'EX', 3600);
 
     res.status(200).json({ community });
@@ -145,8 +148,9 @@ export const eventBySlug = async (req, res) => {
     //   return res.status(200).json({ event: JSON.parse(cacheData) });
     const event = await Event.findOne({ slug }).populate(
       'organizer',
-      'logo name _id'
+      'logo name'
     );
+
     // await redis.set(key, JSON.stringify(event), 'EX', 3600);
     return res.status(200).json({ event });
   } catch (error) {
