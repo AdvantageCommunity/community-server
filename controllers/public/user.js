@@ -38,6 +38,11 @@ export const getUserById = async (req, res) => {
       .populate({
         path: 'blogs',
         model: 'Blog',
+        populate: {
+          path: 'author',
+          model: 'User',
+          select: 'username profilePhoto',
+        },
       })
       .populate({
         path: 'communities.community',
@@ -54,8 +59,8 @@ export const getUserById = async (req, res) => {
         model: 'User',
         select: 'username profilePhoto',
       })
-      .select('-password');
 
+      .select('-password');
     const userDetails = {
       ...user._doc, // Copy all properties from user._doc
       phoneNumber: user.phone.phoneNumber, // Add phoneNumber property
