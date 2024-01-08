@@ -20,6 +20,7 @@ const PORT = process.env.PORT || 8000;
 const corsOptions = {
   origin: [
     'https://applicationadvantagecommunity.onrender.com',
+    'https://dashboard.advantagecommunity.in',
     'https://dashboard-advantagecommunity.onrender.com',
     'https://advantagecommunity.in',
     'http://localhost:3000',
