@@ -7,7 +7,7 @@ import User from '../../../models/users.js';
 import Community from '../../../models/community.js';
 import { redis } from '../../../config/redis.js';
 export const postBlog = async (req, res) => {
-  const { title, content, tags } = req.body;
+  const { title, content, tags, read } = req.body;
 
   const coverImage = req.file;
   if (!title) return res.status(400).json({ message: 'Provide Title!' });
@@ -30,6 +30,7 @@ export const postBlog = async (req, res) => {
       content,
       tags: parsedTags,
       slug,
+      read,
       coverImage: documentResult.Location,
       author: req.rootUser._id,
     });
@@ -42,7 +43,7 @@ export const postBlog = async (req, res) => {
 
     return res
       .status(201)
-      .json({ message: 'Blog Added Successfully!', ok: true });
+      .json({ message: 'Blog Added Successfully!', success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -50,6 +51,7 @@ export const postBlog = async (req, res) => {
 export const updateBlog = async (req, res) => {
   let { slug } = req.params;
   const coverImage = req.file;
+
   let coverImageUrl;
   let prevSlug;
   try {
@@ -59,9 +61,16 @@ export const updateBlog = async (req, res) => {
     });
     if (!blog) return res.status(404).json({ message: 'Blog Not Found!' });
     coverImageUrl = blog.coverImage;
-    const updates = req.body;
-    const allowedUpdates = ['title', 'content', 'tags'];
+    let updates = req.body;
+    const allowedUpdates = ['title', 'content', 'tags', 'read'];
     const requestedUpdates = Object.keys(updates);
+    if (requestedUpdates.includes('tags')) {
+      if (!Array.isArray(updates.tags)) {
+        updates.tags = JSON.parse(updates.tags);
+        if (!Array.isArray(updates.tags))
+          return res.status(400).json({ message: 'Tags should be an Array' });
+      }
+    }
     const isValidUpdate = requestedUpdates.every((update) =>
       allowedUpdates.includes(update)
     );
@@ -92,7 +101,7 @@ export const updateBlog = async (req, res) => {
       const cacheKey = `blog.${prevSlug}`;
       await redis.del(cacheKey);
     }
-    return res.status(201).json({ message: 'Blog Updated!' });
+    return res.status(201).json({ message: 'Blog Updated!', success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -117,7 +126,9 @@ export const deleteBlog = async (req, res) => {
         .json({ message: 'Something Went Wrong. Try Again!' });
     const cacheKey = `blog.${deleteBlog.slug}`;
     await redis.del(cacheKey);
-    return res.status(200).json({ message: 'Blog deleted successfully.' });
+    return res
+      .status(200)
+      .json({ message: 'Blog deleted successfully.', success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -176,7 +187,7 @@ export const likeABlog = async (req, res) => {
       return res.status(200).json({
         message: 'Blog liked successfully',
         likes: blogToLike.likes,
-        success: true.json,
+        success: true,
       });
     } else {
       return res
@@ -229,7 +240,7 @@ export const unLikeABlog = async (req, res) => {
 export const commentOnBlog = async (req, res) => {
   const { blogId } = req.params;
   const { content } = req.body;
-  console.log(req.body);
+
   if (!blogId) return res.status(400).json({ message: 'Provide blog id' });
   if (!content) return res.status(400).json({ message: 'Provide content' });
 
@@ -322,7 +333,7 @@ export const deleteComment = async (req, res) => {
 };
 export const favoriteBlog = async (req, res) => {
   const { blogId } = req.params;
-  console.log(blogId);
+
   if (!blogId) return res.status(400).json({ message: 'Provide blog id ' });
   try {
     const blogExists = await Blog.findOne({ _id: blogId });

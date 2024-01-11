@@ -15,7 +15,12 @@ import { upload } from '../../config/aws.js';
 const router = express.Router();
 
 router.post('/me', upload.single('coverImage'), isUserAuthenticated, postBlog);
-router.patch('/me/:slug', isUserAuthenticated, updateBlog);
+router.patch(
+  '/me/:slug',
+  upload.single('coverImage'),
+  isUserAuthenticated,
+  updateBlog
+);
 router.delete('/me/:slug', isUserAuthenticated, deleteBlog);
 router.post('/:blogId/like', isUserAuthenticated, likeABlog);
 router.delete('/:blogId/like', isUserAuthenticated, unLikeABlog);
