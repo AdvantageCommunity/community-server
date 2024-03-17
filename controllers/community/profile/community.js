@@ -4,6 +4,7 @@ import { io } from '../../../index.js';
 import Community from '../../../models/community.js';
 import User from '../../../models/users.js';
 import { isValidContacts } from '../../../utils/validations.js';
+import slugify from 'slugify';
 export const registerCommunity = async (req, res) => {
   let { name, description, contacts, tags } = req.body;
   if (req.rootUser.communities.length > 0)

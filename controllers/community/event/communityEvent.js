@@ -17,6 +17,7 @@ export const postCommunityEvent = async (req, res) => {
   } = req.body;
   const { communityId } = req.params;
   const eventBanner = req.file;
+
   if (!title) return res.status(400).json({ message: 'Provide title.' });
   if (!description)
     return res.status(400).json({ message: 'Provide description.' });

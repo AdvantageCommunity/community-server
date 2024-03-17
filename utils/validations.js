@@ -28,7 +28,7 @@ export async function generateUniqueUsername(email) {
     const cleanedLocalPart = localPart
       .replace(/[^a-zA-Z0-9]/g, '')
       .toLowerCase();
-    const randomNumber = Math.floor(Math.random() * 10000);
+    const randomNumber = Math.floor(Math.random() * 100);
     const potentialUsername = `${cleanedLocalPart}${randomNumber}`;
 
     const isUsernameTaken = await User.findOne({ username: potentialUsername });

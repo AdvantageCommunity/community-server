@@ -111,9 +111,8 @@ export const loginUser = async (req, res) => {
   if (!userExist) {
     return res.status(404).json({ message: 'User Not Found!' });
   }
-
-  const validPassword = bcrypt.compare(password, userExist.password);
-
+  const validPassword = await bcrypt.compare(password, userExist.password);
+  console.log(validPassword);
   if (!validPassword) {
     return res.status(401).json({ message: 'Incorrect Password!' });
   }
@@ -359,6 +358,10 @@ export const validUser = async (req, res) => {
           path: 'favorites.events',
           model: 'Event',
           select: 'title organizer description imageUrl',
+        })
+        .populate({
+          path: 'communities.community',
+          select: 'slug',
         });
 
       if (!validUser) res.json({ message: 'User is not valid' });

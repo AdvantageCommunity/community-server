@@ -44,7 +44,7 @@ export const communityBySlug = async (req, res) => {
         populate: {
           path: 'author',
           model: 'User',
-          select: 'profilePhoto username',
+          select: 'profilePhoto username firstName lastName',
         },
       })
       .populate({
@@ -57,10 +57,11 @@ export const communityBySlug = async (req, res) => {
           select: 'name logo',
         },
       })
-      .populate('admins', 'username profilePhoto email')
-      .populate('members', 'username profilePhoto email ');
+      .populate('admins', 'username profilePhoto firstName lastName')
+      .populate('members', 'username profilePhoto  firstName lastName');
     // await redis.set(key, JSON.stringify(community), 'EX', 3600);
-
+    if (!community)
+      return res.status(404).json({ message: 'Community Not found' });
     res.status(200).json({ community });
   } catch (error) {
     console.log('Error in community by id api : ' + error);
@@ -68,6 +69,7 @@ export const communityBySlug = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 export const searchCommunity = async (req, res) => {
   const { search } = req.query;
 
