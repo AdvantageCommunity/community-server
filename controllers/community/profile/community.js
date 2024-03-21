@@ -48,7 +48,7 @@ export const registerCommunity = async (req, res) => {
       contacts,
       admins: [req.rootUser._id],
       tags,
-      members: [req.rootUser._id],
+      members: [],
       slug,
     });
     await community.save();
@@ -218,6 +218,10 @@ export const addCommunityAdmin = async (req, res) => {
       community.members.push(userExists._id);
     }
     community.admins.push(userExists._id);
+    userExists.communities.push({
+      community: community._id,
+    });
+    await userExists.save();
     await community.save();
     res.status(201).json({ message: 'Admin added successfully.' });
   } catch (error) {
@@ -360,6 +364,9 @@ export const joinCommunity = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'User is already a member of the community.' });
+    }
+    if (community.admins.some((admin) => admin._id === req.rootUser._id)) {
+      return res.status(400).json({ message: 'Your admin' });
     }
     community.members.push(req.rootUser._id);
 
