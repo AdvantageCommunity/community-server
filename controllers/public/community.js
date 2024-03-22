@@ -84,7 +84,9 @@ export const searchCommunity = async (req, res) => {
         { name: { $regex: new RegExp(search, 'i') } },
         { tags: { $in: [new RegExp(search, 'i')] } },
       ],
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .populate('members', '_id username firstName lastName');
     // await redis.set(key, JSON.stringify(communities), 'EX', 3600);
 
     res.status(200).json({ communities });
